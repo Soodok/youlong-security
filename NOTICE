@@ -1,6 +1,20 @@
 游龙安全护盾 (YouLong Security Shield)
 Copyright (C) 2026 游龙
 
+================================================================================
+【许可证变更说明 · 2026-10-05】
+--------------------------------------------------------------------------------
+    本产品**自有代码**原本按 Apache License 2.0 发布；自本次开源起改为
+    **GNU Affero General Public License v3.0**（仓库根目录 LICENSE）。
+
+    · 下方与 Apache-2.0 有关的表述，凡指"自有代码"的，均应按 AGPL-3.0 理解；
+    · 凡指**第三方**（经 Stellar 内含的 Shizuku、AOSP adb、kyant backdrop 等）
+      的表述，仍适用 Apache-2.0，且其版权头与许可声明一律原样保留；
+    · 内置 Stellar 的修改部分仍适用 MPL-2.0（其第 3.3 条 Secondary License
+      包含 AGPL-3.0，两者可以并存）。
+================================================================================
+
+
 本产品包含第三方开发的开源软件。
 This product includes open source software developed by third parties.
 
@@ -254,7 +268,7 @@ This product includes open source software developed by third parties.
             （含 BIND_DEVICE_ADMIN 权限与 android.app.device_admin meta-data）。
             同时删除 app/src/main/res/xml/device_admin.xml 与
             app/src/main/java/com/youlong/hd/DeviceAdminReceiver.java（整个类）。
-            说明：DeviceAdminReceiver 是本应用**自有代码**（Apache-2.0），
+            说明：DeviceAdminReceiver 是本应用**自有代码**，
             不属于 Stellar 派生文件；此条记录仅为本工程变更留痕。
 
         app/src/main/java/com/youlong/hd/MainActivity.java
@@ -395,7 +409,7 @@ This product includes open source software developed by third parties.
 
   (H) 第七轮改动：日常模式触发拦截时同步收窄无障碍服务（2026-10）
 
-      本项是宿主自有代码（Apache-2.0）的改动，**不涉及 Stellar**；
+      本项是宿主自有代码的改动，**不涉及 Stellar**；
       记录在此仅为变更留痕。
 
       app/src/main/java/com/youlong/hd/ProtectService.java
@@ -438,7 +452,7 @@ This product includes open source software developed by third parties.
       与两处管理器侧新增（授权应用弹窗文案、自身免询问授权）。
       **没有触碰 Stellar 的算法、权限模型、Binder 协议、AIDL 接口定义、数据库结构。**
 
-      宿主自有代码（Apache-2.0）：
+      宿主自有代码：
         index.html
           · 删除顶部「游龙安全护盾」标题栏（.header + h1）；
           · 删除「超级拦截模式 / 极强拦截模式 / 终结模式」三个模式项及其
@@ -508,8 +522,10 @@ This product includes open source software developed by third parties.
       这部分仍适用 Apache-2.0。上游 Shizuku 的版权头在 Stellar 源码中
       原样保留，未作删改。
 
-      Apache-2.0 第 4(a) 条要求的许可证副本即本产品的 LICENSE
-      （以及 LICENSES/Apache-2.0.txt），已随产品一同分发。
+      Apache-2.0 第 4(a) 条要求的许可证副本为 LICENSES/Apache-2.0.txt，
+      并已打包进 APK（res/raw/open_source_licenses.txt 第一部分）随产品分发。
+      （注意：本产品自有代码自 2026-10-05 开源起改为 AGPL-3.0，
+        仓库根目录 LICENSE 不再是 Apache 文本。）
 
       ⚠️ 上游 Shizuku README 中的三项使用限制（不得使用 Shizuku 作为应用名、
         不得使用 moe.shizuku.privileged.api 作为 applicationId、

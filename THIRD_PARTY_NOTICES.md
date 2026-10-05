@@ -9,6 +9,16 @@
 
 ---
 
+## ⚠️ 许可证变更（2026-10-05）
+
+本产品**自有代码**原本按 Apache License 2.0 发布，自本次开源起改为
+**GNU Affero General Public License v3.0**（仓库根目录 `LICENSE`）。
+下文凡指"自有代码"的 Apache-2.0 表述均应按 AGPL-3.0 理解；
+凡指第三方（经 Stellar 内含的 Shizuku、AOSP adb、kyant backdrop 等）的表述
+仍适用 Apache-2.0，其版权与许可声明原样保留。
+MPL-2.0 部分的义务不受影响（其 Secondary License 包含 AGPL-3.0）。
+
+---
 ## ⚠️ 结论先行（2026 年变更）
 
 **本产品自 2026 年起包含 MPL-2.0（Mozilla Public License 2.0）许可的代码。**
@@ -124,11 +134,11 @@ Stellar 部分的**完整逐文件修改清单**见同目录下的 `NOTICE` 第 
 | 3.3 | Larger Work 可按自己的条款分发 | MPL 覆盖代码与本产品自有代码仅为文件级组合，本产品整体仍按自己的条款分发 |
 | Exhibit B | 若上游标记为「与 Secondary License 不兼容」须声明 | 上游 Stellar **未**作此标记，本产品亦未添加 |
 
-### 3.2 Apache-2.0（自有代码 + 经 Stellar 内含的 Shizuku）
+### 3.2 Apache-2.0（经 Stellar 内含的 Shizuku / AOSP adb / kyant backdrop 等**第三方**部分）
 
 | 条款 | 要求 | 本产品如何满足 |
 |---|---|---|
-| 4(a) | 向接收者提供许可证副本 | 根目录 `LICENSE`（= `LICENSES/Apache-2.0.txt`）；并打包进 APK（`res/raw/open_source_licenses.txt` 第一部分），用户可在应用内「高级设置 → 开源许可」查看、复制 |
+| 4(a) | 向接收者提供许可证副本 | `LICENSES/Apache-2.0.txt`（仓库根目录 `LICENSE` 已是本项目的 AGPL-3.0，不再等同 Apache 文本）；并打包进 APK（`res/raw/open_source_licenses.txt` 第一部分），用户可在应用内「高级设置 → 开源许可」查看、复制 |
 | 4(b) | 被修改的文件需带显著修改声明 | 每个改动过的融合源文件顶部都有中文修改说明注释 |
 | 4(c) | 保留所有版权、专利、商标、署名声明 | 融合源码文件头部的原始声明逐字保留 |
 | 4(d) | 若上游存在 NOTICE 文件则须一并分发 | 上游 Shizuku / Shizuku-API / Stellar / AOSP adb 仓库中**均不存在** NOTICE 文件（已逐一核实）；本产品仍主动提供 `NOTICE` 以完整说明署名 |
@@ -202,4 +212,4 @@ Stellar 上游 README 与 `AGENTS.md` **未声明任何**与上述类似的额�
 即内核侧未做任何侵入式修改，界面替换不影响上游代码的完整性与许可义务。
 
 自研界面的源码位于 `app/src/main/java/com/youlong/hd/{PrivilegeActivity,PrivAuthActivity,AppListActivity,PrivSettingsActivity,PrivStatus}.java`，
-与本产品其余自有代码同许可（Apache-2.0）。
+与本产品其余自有代码同许可（现为 AGPL-3.0，见仓库根目录 `LICENSE`）。

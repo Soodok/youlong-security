@@ -139,11 +139,11 @@ apksigner sign --ks 你的.jks --out app-signed.apk \
 │   ├── api/ provider/ aidl/ shared/ userservice/ shizuku-aidl/ shizuku-api/
 │   └── LICENSES/                Apache-2.0 / Stellar-MPL-2.0
 ├── hardening/                   R8 混淆字典（类名/成员名）
-├── LICENSES/                    Apache-2.0、MPL-2.0 全文
+├── LICENSES/                   第三方代码的许可证全文（Apache-2.0、MPL-2.0）
 ├── docs/                        开发记录与编译指南（含真机验证记录）
 ├── NOTICE                       第三方组件与对上游的修改声明（MPL-2.0 §3.4 / Apache-2.0 §4(b)）
 ├── THIRD_PARTY_NOTICES.md       全部第三方组件及其许可证清单
-└── LICENSE                      本项目自有代码：Apache License 2.0
+└── LICENSE                      本仓库许可：GNU AGPL-3.0（自有代码）
 ```
 
 ---
@@ -205,12 +205,23 @@ apksigner sign --ks 你的.jks --out app-signed.apk \
 
 ## 六、许可证
 
-- 本项目**自有代码**：**Apache License 2.0**（见 [`LICENSE`](LICENSE)）。
-- `embedded/` 与 `app/src/main/cpp/stellar/` 中**来自 Stellar 的（已修改）文件**：
-  **Mozilla Public License 2.0**（见 [`LICENSES/MPL-2.0.txt`](LICENSES/MPL-2.0.txt)），
-  **其文件级 copyleft 仅覆盖这些文件本身**。
-- 其内含的 Shizuku 代码：**Apache-2.0**（版权归 RikkaApps）。
-- 其余第三方组件许可证见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
+**本仓库（含本项目自有代码）以 [GNU Affero General Public License v3.0](LICENSE) 发布。**
+
+| 范围 | 许可证 |
+|---|---|
+| 本项目**自有代码**（`app/` 下的 Java/Kotlin/前端/Native、文档等） | **AGPL-3.0**（见根目录 [`LICENSE`](LICENSE)） |
+| `embedded/` 与 `app/src/main/cpp/stellar/` 中**来自 Stellar 的（已修改）文件** | **Mozilla Public License 2.0**（见 [`LICENSES/MPL-2.0.txt`](LICENSES/MPL-2.0.txt)）；**文件级 copyleft，仅覆盖这些文件本身** |
+| 经 Stellar 内含的 **Shizuku** 代码、AOSP adb 协议实现、kyant backdrop | **Apache-2.0**（版权归各自作者） |
+| 其余第三方依赖（AndroidX / Compose / Room / BoringSSL / libc++ …） | 见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) |
+
+> **兼容性说明**：AGPL-3.0 与上表中的第三方许可可以并存 ——
+> MPL-2.0 第 3.3 条的 Secondary License 明确包含 AGPL-3.0；
+> Apache-2.0 与 AGPL-3.0（GPL-3.0 + 网络条款）兼容。
+> 第三方文件的版权头与许可证声明一律原样保留，未作删改。
+>
+> ⚠️ **历史说明**：本项目自有代码过去按 Apache-2.0 发布（旧注释/旧文档里可能仍写着
+> Apache-2.0），自本次开源起统一改为 **AGPL-3.0**；`NOTICE`、`THIRD_PARTY_NOTICES.md`
+> 与应用内「开源许可」页面（`res/raw/open_source_licenses.txt`）已同步更新。
 
 ---
 
