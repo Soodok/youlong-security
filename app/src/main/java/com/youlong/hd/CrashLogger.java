@@ -22,75 +22,50 @@ import java.util.ArrayDeque;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * 全局运行日志 + 崩溃捕获。
- *
- * <p>为什么需要它：内置的 Shizuku 管理器界面是独立的一套 Activity，它闪退时
- * WebView 首页还活着，但用户拿不到任何信息（logcat 普通人看不到）。本类做三件事：
- *
- * <ol>
- *   <li><b>运行轨迹</b>：把关键操作（打开管理器、Activity 生命周期、Shizuku 初始化）
- *       记进内存环形缓冲，不写盘，零 IO 开销。</li>
- *   <li><b>崩溃捕获</b>：接管 {@link Thread.UncaughtExceptionHandler}，把异常堆栈 +
- *       完整运行轨迹 + 设备信息写进文件，然后**才**交还给系统原处理器
- *       （保证系统仍会正常杀掉进程、弹「应用已停止运行」）。</li>
- *   <li><b>可取出</b>：文件写在应用外部私有目录，同时页面上有「复制日志」按钮，
- *       用户一键复制粘贴即可把日志发出来，不需要 root、不需要连电脑。</li>
- * </ol>
- *
- * <p>注意：我们**不做**「崩溃后重启应用」这类花招。崩溃就让它崩，
- * 但一定要把原因留下来。
- */
+
 public final class CrashLogger {
 
     private static final String TAG = "CrashLogger";
 
-    /** 最近一次崩溃（会被下一次崩溃覆盖）。 */
+    
     private static final String FILE_LAST_CRASH = "last_crash.txt";
-    /** 崩溃历史（每次崩溃追加，最多保留 {@link #MAX_HISTORY} 次）。 */
+    
     private static final String FILE_HISTORY = "crash_history.txt";
 
-    /** 内存轨迹最多保留条数。 */
+    
     private static final int MAX_EVENTS = 240;
-    /** 崩溃日志最多写多少行堆栈，防止异常被反复包装导致文件爆炸。 */
+    
     private static final int MAX_STACK_LINES = 200;
-    /** 历史文件最多保留的崩溃次数。 */
+    
     private static final int MAX_HISTORY = 5;
 
     private static final SimpleDateFormat TIME_FMT =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
 
-    /**
-     * 取当前时间字符串。
-     * ⚠️ {@link SimpleDateFormat} 不是线程安全的，而 {@link #event(String)} 会被
-     * 主线程与后台 executor 同时调用，直接 format 可能返回错乱结果甚至抛
-     * ArrayIndexOutOfBoundsException（那就把调用方一起带崩了）。必须加锁。
-     */
+    
     private static String now() {
         synchronized (TIME_FMT) {
             return TIME_FMT.format(new Date());
         }
     }
 
-    /** 内存环形轨迹。用 synchronized 保护，因为后台线程也会写。 */
+    
     private static final ArrayDeque<String> EVENTS = new ArrayDeque<>();
 
     private static volatile Application sApp;
     private static volatile boolean sInstalled;
     private static volatile Thread.UncaughtExceptionHandler sPreviousHandler;
-    /** 崩溃写入过程中再次崩溃的保护位。 */
+    
     private static volatile boolean sWriting;
 
     private CrashLogger() {
     }
 
     // ==================================================================
-    // 安装
+    
     // ==================================================================
 
-    /**
-     * 在 {@code Application.onCreate()} 最开头调用。重复调用安全。
-     */
+    
     public static void install(Application app) {
         if (app == null) return;
         sApp = app;
@@ -100,7 +75,7 @@ public final class CrashLogger {
             sInstalled = true;
         }
 
-        // Activity 轨迹：谁被创建 / 谁被销毁，闪退前最后进的是哪个界面一目了然
+        
         try {
             app.registerActivityLifecycleCallbacks(new ActivityCallbacks());
         } catch (Throwable tr) {
@@ -114,10 +89,10 @@ public final class CrashLogger {
     }
 
     // ==================================================================
-    // 记录
+    
     // ==================================================================
 
-    /** 记一条运行轨迹（内存，不写盘）。 */
+    
     public static void event(String message) {
         String line = "[" + now() + "] "
                 + "tid=" + Process.myTid() + " " + message;
@@ -128,7 +103,7 @@ public final class CrashLogger {
         Log.i(TAG, message);
     }
 
-    /** 记一条带异常的运行轨迹（同样只进内存）。 */
+    
     public static void event(String message, Throwable tr) {
         event(message + " -> " + (tr == null ? "null" : tr.toString()));
         if (tr != null) {
@@ -139,7 +114,7 @@ public final class CrashLogger {
     }
 
     // ==================================================================
-    // 崩溃处理
+    
     // ==================================================================
 
     private static final class Handler implements Thread.UncaughtExceptionHandler {
@@ -150,8 +125,8 @@ public final class CrashLogger {
             } catch (Throwable inner) {
                 Log.e(TAG, "写崩溃日志本身又失败了", inner);
             }
-            // 交还给系统原处理器（默认会弹「应用已停止运行」并杀进程），
-            // 保证行为与没装本类时一致，绝不吞掉崩溃。
+            
+            
             Thread.UncaughtExceptionHandler prev = sPreviousHandler;
             if (prev != null && prev != this) {
                 prev.uncaughtException(thread, ex);
@@ -202,26 +177,23 @@ public final class CrashLogger {
     }
 
     // ==================================================================
-    // 读取 / 清除（供 JS 桥使用）
+    
     // ==================================================================
 
-    /** 是否存在未清除的崩溃记录。 */
+    
     public static boolean hasCrash(Context ctx) {
         File f = lastCrashFile(ctx);
         return f != null && f.isFile() && f.length() > 0;
     }
 
-    /** 读取最近一次崩溃日志；没有则返回空串。 */
+    
     public static String readCrash(Context ctx) {
         File f = lastCrashFile(ctx);
         if (f == null || !f.isFile()) return "";
         return readFile(f, 64 * 1024);
     }
 
-    /**
-     * 组装「诊断报告」：不管有没有崩溃都能用。
-     * 内容 = 设备信息 + 运行轨迹 + （有的话）最近一次崩溃。
-     */
+    
     public static String buildDiagnostics(Context ctx) {
         StringBuilder sb = new StringBuilder(16384);
         header(sb, hasCrash(ctx) ? "诊断报告（含最近一次崩溃）" : "诊断报告（本次运行暂无崩溃）");
@@ -243,17 +215,7 @@ public final class CrashLogger {
         return sb.toString();
     }
 
-    /**
-     * 把当前运行轨迹快照写到外部私有目录的一个文本文件里。
-     *
-     * <p>为什么需要它：{@link #event(String)} 只写内存环形缓冲，正常运行时**不落盘**
-     * （避免频繁 IO）。但排查"自研特权内核在 shell 侧到底跑成什么样"这类问题时，
-     * 需要一份不依赖崩溃、随时可读的落盘轨迹。页面「复制日志」走的是
-     * {@link #buildDiagnostics(Context)}，这里给自研内核提供一个等价的落盘出口。
-     *
-     * @param fileName 目标文件名（写在 {@code 外部私有目录/files/crash/} 下）
-     * @return 实际写入的文件；失败返回 null（绝不抛异常给调用方）
-     */
+    
     public static File dumpEventsToFile(Context ctx, String fileName, String extraHeader) {
         try {
             File dir = crashDir(ctx);
@@ -278,7 +240,7 @@ public final class CrashLogger {
         }
     }
 
-    /** 清除崩溃记录（诊断轨迹保留）。 */
+    
     public static void clear(Context ctx) {
         deleteQuietly(lastCrashFile(ctx));
         deleteQuietly(historyFile(ctx));
@@ -286,7 +248,7 @@ public final class CrashLogger {
     }
 
     // ==================================================================
-    // 内部工具
+    
     // ==================================================================
 
     private static void header(StringBuilder sb, String kind) {
@@ -309,7 +271,7 @@ public final class CrashLogger {
                 .append(" (SDK ").append(Build.VERSION.SDK_INT).append(")")
                 .append("  ABI=").append(Build.SUPPORTED_ABIS.length > 0 ? Build.SUPPORTED_ABIS[0] : "?")
                 .append('\n');
-        // 【开源版已移除】原版这里会调用 SignatureVerifier.verify(app) 显示签名校验结果
+        
         sb.append("签名校验: 开源版无内置签名指纹，未校验").append('\n');
         sb.append('\n');
     }
@@ -337,10 +299,7 @@ public final class CrashLogger {
         return sb.toString();
     }
 
-    /**
-     * 崩溃日志目录：外部私有目录优先（用户/电脑都好取），失败退回内部目录。
-     * 两个都拿不到时（只在 Application 还没起来时可能发生）退回内部缓存目录。
-     */
+    
     private static File crashDir(Context ctx) {
         File dir = null;
         if (ctx != null) {
@@ -380,7 +339,7 @@ public final class CrashLogger {
             File f = historyFile(ctx);
             String old = readFile(f, 256 * 1024);
             String merged = text + "\n\n" + old;
-            // 只保留最近 MAX_HISTORY 次（以分隔线数量粗略裁剪）
+            
             String[] parts = merged.split("========== 游龙安全护盾 崩溃 ==========");
             StringBuilder sb = new StringBuilder(parts.length * 64);
             int kept = 0;
@@ -397,7 +356,7 @@ public final class CrashLogger {
         if (f == null || text == null) return;
         Writer w = null;
         try {
-            // 不用 try-with-resources，保持对老版本 Java 的兼容写法一致
+            
             FileOutputStream fos = new FileOutputStream(f, false);
             w = new OutputStreamWriter(fos, "UTF-8");
             w.write(text);
@@ -446,7 +405,7 @@ public final class CrashLogger {
         if (f == null) return;
         try {
             if (f.isFile() && !f.delete()) {
-                // 删不掉就清空内容，效果等价
+                
                 writeFile(f, "");
             }
         } catch (Throwable ignored) {
@@ -454,7 +413,7 @@ public final class CrashLogger {
     }
 
     // ==================================================================
-    // Activity 轨迹
+    
     // ==================================================================
 
     private static final class ActivityCallbacks implements Application.ActivityLifecycleCallbacks {

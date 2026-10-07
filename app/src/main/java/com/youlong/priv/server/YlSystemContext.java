@@ -10,23 +10,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-/**
- * 自研特权内核 · 服务端 Context 获取（**不用隐藏 API 编译期符号**）。
- *
- * <p>服务端跑在 shell 身份的 {@code app_process} 里，没有普通 {@code Application}，
- * 但需要 Context 来做两件事：拿自己的 uid 做权限归属判断、读写授权记录。
- *
- * <p>{@code android.app.ActivityThread} 不在公开 SDK 里（直接 import 会编译不过），
- * 所以这里**用反射**调用 {@code ActivityThread.systemMain().getSystemContext()} ——
- * 这是 AOSP 长期稳定存在的入口；反射失败也不致命，调用方会退回文件存储。
- */
+
 final class YlSystemContext {
 
     private static final String TAG = "YlSystemContext";
 
     private YlSystemContext() {}
 
-    /** 取系统 Context；取不到返回 null（调用方必须能容忍）。 */
+    
     static Context get() {
         try {
             Class<?> at = Class.forName("android.app.ActivityThread");
@@ -42,9 +33,7 @@ final class YlSystemContext {
         return null;
     }
 
-    /**
-     * 服务端可用的持久化目录：优先 Context 私有目录，退回 shell 可写目录。
-     */
+    
     static File storeDir(Context ctx) {
         if (ctx != null) {
             try {
@@ -58,7 +47,7 @@ final class YlSystemContext {
         return fallback;
     }
 
-    /** 读一个属性文件（不存在返回空 Properties）。 */
+    
     static Properties loadProps(File f) {
         Properties p = new Properties();
         if (f == null || !f.exists()) return p;
@@ -74,7 +63,7 @@ final class YlSystemContext {
         return p;
     }
 
-    /** 写属性文件（失败只记日志）。 */
+    
     static void saveProps(File f, Properties p) {
         if (f == null || p == null) return;
         OutputStream out = null;

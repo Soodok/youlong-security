@@ -27,16 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * AdSkipService v5
- *
- * 诊断 v4 不工作的根因：
- * 1. mEnabled 永远为 false（toggle 关着时 add app，prefs 写 enabled=false）
- * 2. findSkipInTree 先 recycle 候选再点击，obtain() 拷贝随源节点一起失效
- * 3. findAccessibilityNodeInfosByText 不搜 contentDescription
- *
- * v5：点击前不 recycle，直接持节点引用；自动启用；dump 日志
- */
+
 public class AdSkipService extends AccessibilityService {
 
     private static final String TAG = "AdSkip";
@@ -46,50 +37,35 @@ public class AdSkipService extends AccessibilityService {
     private static volatile boolean sRunning = false;
     private static AdSkipService sInstance;
 
-    /** 前台应用变化回调接口 */
+    
     public interface ForegroundChangeListener {
         void onForegroundChanged(String pkg);
     }
     private static ForegroundChangeListener sFgListener = null;
 
-    /** 注册前台变化监听 */
+    
     public static void setForegroundChangeListener(ForegroundChangeListener l) {
         sFgListener = l;
     }
 
-    /** ===== 音量键回调接口（无障碍服务 onVolumeChanged / onKeyEvent 触发）===== */
+    
     public interface VolumeChangeListener {
-        /**
-         * @param volumeType 变化的音频流编号（-1 表示来自物理按键层）
-         * @param direction  按键方向：-1 = 音量减，+1 = 音量加，0 = 无法判断（由上层结合音量变化推断）
-         */
+        
         void onVolumeChanged(int volumeType, int direction);
     }
     private static VolumeChangeListener sVolListener = null;
 
-    /** 注册音量变化监听 */
+    
     public static void setVolumeChangeListener(VolumeChangeListener l) {
         sVolListener = l;
     }
 
-    /**
-     * 音量监听是否还挂着。
-     *
-     * <p>2026-10 改动（修 bug「紧急逃生只能触发一次」）：灵敏度触发靠的是静态回调
-     * {@link #sVolListener}，而 {@code ProtectService.onDestroy()} 会把它清成 null，
-     * 一旦哪个路径（服务被系统回收后重建、异常退出、其它代码误清）清掉它却没重新注册，
-     * 音量键逃生就会"静默失效"——按键有反应、界面全无、日志里什么都看不到，
-     * 用户只能重开 App 或重开守护才能恢复。这里提供探针 + 自愈入口。
-     */
+    
     public static boolean isVolumeListenerRegistered() {
         return sVolListener != null;
     }
 
-    /**
-     * 自愈：音量监听被清掉且无障碍服务仍在运行时，重新挂上。
-     *
-     * @return true = 本次调用把监听重新挂上了（说明此前确实处于失效状态）
-     */
+    
     public static boolean ensureVolumeListener(VolumeChangeListener l) {
         if (l == null) return false;
         if (sVolListener != null) return false;
@@ -98,7 +74,7 @@ public class AdSkipService extends AccessibilityService {
         return true;
     }
 
-    /** 获取当前前台应用包名 */
+    
     public static String getForegroundPkg() {
         if (sInstance != null) return sInstance.mCurrentPkg;
         return null;
@@ -125,12 +101,12 @@ public class AdSkipService extends AccessibilityService {
             "Skip Ad", "Skip ad", "Skip",
     };
 
-    /** 广告特征词：页面出现任一即判定为广告页 */
+    
     private static final String[] AD_INDICATOR_TEXTS = {
             "点击跳转", "摇一摇", "广告",
     };
 
-    // ==================== 生命周期 ====================
+    
 
     @Override
     public void onCreate() {
@@ -164,7 +140,7 @@ public class AdSkipService extends AccessibilityService {
     public void onServiceConnected() {
         super.onServiceConnected();
         sRunning = true;
-        // 启用按键过滤（必须！否则 onKeyEvent 不会收到事件）
+        
         try {
             AccessibilityServiceInfo info = getServiceInfo();
             if (info != null) {
@@ -177,13 +153,7 @@ public class AdSkipService extends AccessibilityService {
         }
     }
 
-    /**
-     * 音量键变化回调（API 26+）
-     * 只要有音量变化（无论铃声还是媒体）立即通知 ProtectService。
-     * 系统只告知"哪个音频流变了"，不告知是加还是减 → direction 传 0，
-     * 由 ProtectService 对比前后音量数值推断方向。
-     * minSdk=24 无法用 @Override，但系统在 API 26+ 会通过虚方法分派正确调用此方法
-     */
+    
     public void onVolumeChanged(int volumeType) {
         Log.v(TAG, "onVolumeChanged type=" + volumeType);
         if (sVolListener != null) {
@@ -191,14 +161,7 @@ public class AdSkipService extends AccessibilityService {
         }
     }
 
-    /**
-     * 物理按键拦截（API 18+）— 音量最低/最高时的救命通道
-     *
-     * 当音量已是 0（或已是最大）时，系统不发送 onVolumeChanged / VOLUME_CHANGED_ACTION，
-     * 但物理按键事件始终会传递到这里。这一层是唯一能**准确分辨音量+ / 音量-**的地方，
-     * 所以必须把方向一并上报，供用户自定义"按音量- 还是音量+"触发。
-     * 不消费事件，让系统正常处理音量。
-     */
+    
     @Override
     public boolean onKeyEvent(KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -208,22 +171,19 @@ public class AdSkipService extends AccessibilityService {
             else if (code == KeyEvent.KEYCODE_VOLUME_UP) dir = 1;
             if (dir != 0) {
                 Log.v(TAG, "onKeyEvent 音量" + (dir > 0 ? "+" : "-") + " 物理按键(不消费)");
-                // 通过音量回调通道通知 ProtectService（-1 = 物理按键层）
+                
                 if (sVolListener != null) {
                     sVolListener.onVolumeChanged(-1, dir);
                 }
             }
-            // 不消费事件，让系统正常处理音量
+            
         }
         return super.onKeyEvent(event);
     }
 
-    /**
-     * 兼容 API 24/25：通过 AccessibilityEvent.TYPE_TOUCH_INTERACTION_END 无法监听音量，
-     * 这部分设备由 ProtectService 的 120ms 轮询 + VOLUME_CHANGED_ACTION 广播兜底
-     */
+    
 
-    // ==================== 事件 ====================
+    
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -241,7 +201,7 @@ public class AdSkipService extends AccessibilityService {
         if (type == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             Log.d(TAG, "WINDOW_STATE_CHANGED pkg=" + pkg + " current=" + mCurrentPkg);
             mCurrentPkg = pkg;
-            // 通知前台应用变化
+            
             if (sFgListener != null) {
                 sFgListener.onForegroundChanged(pkg);
             }
@@ -251,14 +211,14 @@ public class AdSkipService extends AccessibilityService {
                 scheduleScan(4000);
             }
         }
-        // 注意：不响应 TYPE_WINDOW_CONTENT_CHANGED——它一秒触发几十次，极度耗电卡顿
+        
     }
 
     private boolean shouldMonitor(String pkg) {
         return pkg != null && mMonitorPkgs.contains(pkg) && !mBlacklistPkgs.contains(pkg);
     }
 
-    // ==================== 扫描 ====================
+    
 
     private void scheduleScan(long delayMs) {
         mScanPending = true;
@@ -269,12 +229,12 @@ public class AdSkipService extends AccessibilityService {
     }
 
     private void doScan() {
-        // 限速：至少间隔 MIN_SCAN_INTERVAL
+        
         long now = System.currentTimeMillis();
         if (now - mLastScanTime < MIN_SCAN_INTERVAL) return;
         mLastScanTime = now;
 
-        // 关键守卫：只扫描监控列表中的应用
+        
         if (!mEnabled || mMonitorPkgs.isEmpty()) return;
         if (!shouldMonitor(mCurrentPkg)) return;
         if (mBlacklistPkgs.contains(mCurrentPkg)) return;
@@ -284,7 +244,7 @@ public class AdSkipService extends AccessibilityService {
             return;
         }
 
-        // 存储所有待回收的节点
+        
         List<AccessibilityNodeInfo> toRecycle = new ArrayList<>();
 
         try {
@@ -303,7 +263,7 @@ public class AdSkipService extends AccessibilityService {
             target.getBoundsInScreen(b);
             Log.d(TAG, "TARGET bounds=" + b.toShortString());
 
-            // 尝试 performAction
+            
             boolean ok = false;
             if (target.isClickable()) {
                 ok = target.performAction(AccessibilityNodeInfo.ACTION_CLICK);
@@ -318,14 +278,14 @@ public class AdSkipService extends AccessibilityService {
                 Log.d(TAG, "gestureClick: " + ok);
             }
 
-            // 最终兜底：有覆盖层 + 全失败 → 点右上角（X按钮典型位置）
+            
             if (!ok && hasOverlayWindow()) {
                 int cx = (int)(mScreenW * 0.95);
                 int cy = (int)(mScreenH * 0.05);
                 ok = gestureClick(cx, cy);
                 Log.d(TAG, "cornerTap(" + cx + "," + cy + "): " + ok);
                 if (!ok) {
-                    // 偏左一点再试一次
+                    
                     cx = (int)(mScreenW * 0.88);
                     ok = gestureClick(cx, cy);
                     Log.d(TAG, "cornerTap2(" + cx + "," + cy + "): " + ok);
@@ -344,14 +304,14 @@ public class AdSkipService extends AccessibilityService {
         } catch (Exception e) {
             Log.w(TAG, "doScan err", e);
         } finally {
-            // 统一回收所有节点
+            
             for (AccessibilityNodeInfo n : toRecycle) {
                 try { n.recycle(); } catch (Exception ignored) {}
             }
         }
     }
 
-    // ==================== 查找跳过按钮（延迟 recycle） ====================
+    
 
     private AccessibilityNodeInfo findSkipButton(List<AccessibilityNodeInfo> toRecycle) {
         List<AccessibilityWindowInfo> windows = getWindows();
@@ -367,8 +327,8 @@ public class AdSkipService extends AccessibilityService {
                 int winType = win.getType();
                 Log.d(TAG, "win type=" + winType + " pkg=" + wpkg);
 
-                // 修复：不按包名过滤——广告 SDK 窗口包名和应用不同
-                // 所有窗口统一暴力搜索
+                
+                
                 AccessibilityNodeInfo r = scanWindow(root, toRecycle);
                 win.recycle();
                 if (r != null) return r;
@@ -384,14 +344,14 @@ public class AdSkipService extends AccessibilityService {
         return null;
     }
 
-    /** 统一窗口扫描：广告特征词检测 → 文本搜 → 递归搜 → X按钮探测 */
+    
     private AccessibilityNodeInfo scanWindow(AccessibilityNodeInfo root,
                                              List<AccessibilityNodeInfo> toRecycle) {
-        // 0）新规则：检测"点击跳转"/"摇一摇"/"广告" → 有则找"跳过"/X
+        
         AccessibilityNodeInfo adSkipResult = adKeywordTriggeredScan(root, toRecycle);
         if (adSkipResult != null) return adSkipResult;
 
-        // 1）系统 API 文本搜索——所有关键词
+        
         String[] searchWords = {"跳过广告", "点击跳过", "跳过",
                                "关闭广告", "关闭",
                                "Skip Ad", "Skip ad", "Skip",
@@ -408,38 +368,35 @@ public class AdSkipService extends AccessibilityService {
             }
         }
 
-        // 2）递归全树搜（关键词、倒计时、viewId、自定义关键词）
+        
         AccessibilityNodeInfo found = searchTree(root, toRecycle);
         if (found != null) return found;
 
-        // 3）X 按钮探测
+        
         AccessibilityNodeInfo xBtn = findXButton(root, toRecycle);
         if (xBtn != null) return xBtn;
 
         return null;
     }
 
-    /** 目标是否在屏幕下半部（广告跳过按钮典型区域） */
+    
     private boolean isBottomArea(AccessibilityNodeInfo n) {
         Rect b = new Rect();
         n.getBoundsInScreen(b);
         return b.top >= mScreenH * 0.45;
     }
 
-    // ==================== 新规则：广告特征词触发跳过/X ====================
+    
 
-    /**
-     * 两步检测：先扫描整棵树是否有"点击跳转"/"摇一摇"/"广告"，
-     * 有则再搜索"跳过"文字或 X 按钮，找到返回可点击节点。
-     */
+    
     private AccessibilityNodeInfo adKeywordTriggeredScan(AccessibilityNodeInfo root,
                                                         List<AccessibilityNodeInfo> toRecycle) {
-        // Step 1: 遍历全树检测广告特征词
+        
         if (!hasAdIndicators(root, toRecycle)) return null;
 
         Log.d(TAG, "adKeywordTriggeredScan: ad indicator detected, hunting skip/X");
 
-        // Step 2: 搜索"跳过"文字
+        
         AccessibilityNodeInfo skip = findTextInTree(root, "跳过", toRecycle);
         if (skip != null) {
             AccessibilityNodeInfo clk = skip.isClickable() ? skip
@@ -450,7 +407,7 @@ public class AdSkipService extends AccessibilityService {
             }
         }
 
-        // Step 3: 搜索 X 按钮
+        
         AccessibilityNodeInfo xBtn = findXButton(root, toRecycle);
         if (xBtn != null) {
             Log.d(TAG, "adKeywordTriggeredScan: found X button → click");
@@ -461,7 +418,7 @@ public class AdSkipService extends AccessibilityService {
         return null;
     }
 
-    /** 遍历整棵树，检测是否包含任意广告特征词 */
+    
     private boolean hasAdIndicators(AccessibilityNodeInfo node,
                                     List<AccessibilityNodeInfo> toRecycle) {
         if (node == null) return false;
@@ -474,7 +431,7 @@ public class AdSkipService extends AccessibilityService {
             }
         }
 
-        // contentDescription 也检查
+        
         CharSequence desc = node.getContentDescription();
         if (desc != null) {
             String d = desc.toString();
@@ -495,7 +452,7 @@ public class AdSkipService extends AccessibilityService {
         return false;
     }
 
-    /** 在树中搜索包含指定文字的可见节点，返回找到的第一个 */
+    
     private AccessibilityNodeInfo findTextInTree(AccessibilityNodeInfo node, String keyword,
                                                   List<AccessibilityNodeInfo> toRecycle) {
         if (node == null) return null;
@@ -520,7 +477,7 @@ public class AdSkipService extends AccessibilityService {
         return null;
     }
 
-    /** 检测是否有非活动窗口（广告弹窗通常在此） */
+    
     private boolean hasOverlayWindow() {
         List<AccessibilityWindowInfo> windows = getWindows();
         if (windows == null) return false;
@@ -533,17 +490,17 @@ public class AdSkipService extends AccessibilityService {
         return false;
     }
 
-    /** 覆盖层专用尺寸校验——比普通 isGoodSize 更宽松，允许小尺寸按钮 */
+    
     private boolean isGoodSizeForOverlay(AccessibilityNodeInfo n) {
         Rect b = new Rect();
         n.getBoundsInScreen(b);
         int w = b.width(), h = b.height();
-        if (w <= 2 || h <= 2) return false;          // 2px 以下无视
-        if (w > mScreenW * 0.95 && h > mScreenH * 0.85) return false; // 全屏巨物跳过
+        if (w <= 2 || h <= 2) return false;          
+        if (w > mScreenW * 0.95 && h > mScreenH * 0.85) return false; 
         return true;
     }
 
-    /** X 按钮探测：扫描覆盖层树中角落小尺寸点击节点（无文本的 ImageView 等） */
+    
     private AccessibilityNodeInfo findXButton(AccessibilityNodeInfo root,
                                               List<AccessibilityNodeInfo> toRecycle) {
         return scanForX(root, toRecycle);
@@ -553,28 +510,28 @@ public class AdSkipService extends AccessibilityService {
                                            List<AccessibilityNodeInfo> toRecycle) {
         if (node == null) return null;
 
-        // 候选：可见 + 可点（或可点父节点）+ 小尺寸 + 在窗口顶部区域
+        
         if (node.isVisibleToUser() && node.isClickable()) {
             Rect b = new Rect();
             node.getBoundsInScreen(b);
             int w = b.width(), h = b.height();
-            // X 按钮典型：10~80px 正方形，位于屏幕顶部区域
+            
             boolean isSmall = (w >= 10 && w <= 90 && h >= 10 && h <= 90);
             boolean isTopArea = (b.top < mScreenH * 0.15);
-            // 无文本（纯图标的 X）
+            
             boolean noText = (node.getText() == null || node.getText().toString().trim().isEmpty());
             if (isSmall && isTopArea && noText) {
                 Log.d(TAG, "scanForX: small clickable in top area bounds=" + b.toShortString());
                 return node;
             }
-            // 放宽：右半侧 + 顶部（X 通常在右上角）
+            
             if (isSmall && isTopArea && b.left > mScreenW * 0.5) {
                 Log.d(TAG, "scanForX: right-top small bounds=" + b.toShortString());
                 return node;
             }
         }
 
-        // 即使不可点，子节点可能有 X
+        
         for (int i = 0; i < node.getChildCount(); i++) {
             AccessibilityNodeInfo child = node.getChild(i);
             if (child == null) continue;
@@ -589,9 +546,9 @@ public class AdSkipService extends AccessibilityService {
         return null;
     }
 
-    // ==================== 递归搜索 ====================
+    
 
-    /** 覆盖层专用的搜索关键词（比全局 SKIP_TEXTS 更广泛） */
+    
     private static final String[] OVERLAY_KEYWORDS = {
             "关闭", "close", "dismiss", "取消", "忽略",
             "x", "×", "不再提示", "忽略提醒",
@@ -603,7 +560,7 @@ public class AdSkipService extends AccessibilityService {
 
         if (node.isVisibleToUser() && isGoodSizeForOverlay(node)) {
             String text = nodeText(node);
-            // 全局跳过词
+            
             for (String kw : SKIP_TEXTS) {
                 if (text.contains(kw)) {
                     Log.d(TAG, "searchTree found by text: '" + text + "'");
@@ -612,7 +569,7 @@ public class AdSkipService extends AccessibilityService {
                     return (clk != null) ? clk : node;
                 }
             }
-            // 覆盖层专用词（关闭/close/dismiss/X等）
+            
             for (String kw : OVERLAY_KEYWORDS) {
                 if (text.contains(kw)) {
                     Log.d(TAG, "searchTree found by overlay kw: '" + text + "'");
@@ -621,14 +578,14 @@ public class AdSkipService extends AccessibilityService {
                     return (clk != null) ? clk : node;
                 }
             }
-            // 倒计时: "跳过 3s", "3秒后关闭"
+            
             if (text.matches(".*跳过\\s*\\d+\\s*[s秒]?.*") || text.matches(".*\\d+\\s*[s秒]\\s*(后|跳过|关闭).*")) {
                 Log.d(TAG, "searchTree found by countdown: '" + text + "'");
                 AccessibilityNodeInfo clk = node.isClickable() ? node
                         : findClickableUp(node, toRecycle);
                 return (clk != null) ? clk : node;
             }
-            // viewId 含 skip/close/dismiss
+            
             String vid = viewId(node);
             if (vid != null && (vid.contains("skip") || vid.contains("close")
                     || vid.contains("dismiss"))) {
@@ -637,7 +594,7 @@ public class AdSkipService extends AccessibilityService {
                         : findClickableUp(node, toRecycle);
                 return (clk != null) ? clk : node;
             }
-            // 自定义关键词匹配
+            
             for (String kw : mCustomKeywords) {
                 if (!kw.isEmpty() && text.contains(kw.toLowerCase())) {
                     Log.d(TAG, "searchTree found by custom keyword: '" + kw + "'");
@@ -658,9 +615,9 @@ public class AdSkipService extends AccessibilityService {
         return null;
     }
 
-    // ==================== 上溯找可点击父节点 ====================
+    
 
-    /** 从 node 往上找可点击父节点，沿途节点加入 toRecycle */
+    
     private AccessibilityNodeInfo findClickableUp(AccessibilityNodeInfo node,
                                                    List<AccessibilityNodeInfo> toRecycle) {
         if (node == null) return null;
@@ -678,7 +635,7 @@ public class AdSkipService extends AccessibilityService {
         return null;
     }
 
-    // ==================== 点击 ====================
+    
 
     private boolean clickParent(AccessibilityNodeInfo node) {
         AccessibilityNodeInfo cur = node.getParent();
@@ -724,7 +681,7 @@ public class AdSkipService extends AccessibilityService {
         return result[0];
     }
 
-    // ==================== 调试 dump ====================
+    
 
     private long mLastDumpTime = 0;
 
@@ -773,7 +730,7 @@ public class AdSkipService extends AccessibilityService {
         }
     }
 
-    // ==================== 工具 ====================
+    
 
     private boolean isGoodSize(AccessibilityNodeInfo n) {
         Rect b = new Rect();
@@ -799,7 +756,7 @@ public class AdSkipService extends AccessibilityService {
         return n.getViewIdResourceName().toString().toLowerCase();
     }
 
-    // ==================== 统计 ====================
+    
 
     private void saveStats() {
         SharedPreferences p = getSharedPreferences("adskip_stats", Context.MODE_PRIVATE);
@@ -811,7 +768,7 @@ public class AdSkipService extends AccessibilityService {
         p.edit().putInt("today", today).putInt("total", total).putString("date", td).apply();
     }
 
-    // ==================== 配置 ====================
+    
 
     private void loadConfig() {
         SharedPreferences p = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -819,7 +776,7 @@ public class AdSkipService extends AccessibilityService {
         mMonitorPkgs = parsePkg(p.getString("monitor_apps", "[]"));
         mBlacklistPkgs = parsePkg(p.getString("blacklist_apps", "[]"));
         mCustomKeywords = parseKeywords(p.getString("custom_keywords", "[]"));
-        // 完全尊重用户开关——用户关就是关
+        
         mEnabled = storedEnabled;
         Log.d(TAG, "loadConfig storedEnabled=" + storedEnabled
                 + " monitors=" + mMonitorPkgs + " keywords=" + mCustomKeywords

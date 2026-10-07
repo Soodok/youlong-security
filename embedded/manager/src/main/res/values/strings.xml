@@ -1,32 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ==========================================================================
-  本文件来自 https://github.com/roro2239/Stellar 的 manager/src/main/res/
-  （MPL-2.0；其中源自 Shizuku 的部分为 Apache-2.0）
 
-  【本工程修改声明】—— 按 MPL-2.0 第 3.4 条标注
-    改动：app_name 的值由 "Stellar" 改为 "游龙安全护盾"；并删除
-          values-ar / -es / -fr / -ja / -pt-rBR / -ru / -zh-rHK / -zh-rTW
-          这 8 个文件里的同名条目。
-
-    原因：上游 manager 是独立 APK，需要自己的应用名。本工程把它作为库模块并入
-          「游龙安全护盾」后，这些资源会**覆盖宿主 :app 的 app_name**：
-          资源合并时库模块的同名资源默认优先于主模块，宿主又只在默认
-          values/ 里定义了 app_name，于是所有「上游 manager 有、宿主没有」
-          的语言（ar / es / fr / ja / pt / ru / zh-HK / zh-TW）下，
-          桌面图标与应用信息的名字会变成英文的 "Stellar"。
-          实测 `aapt2 dump badging` 会看到 application-label-ar:'Stellar' 等 13 条。
-
-    为什么 values/（默认）这一条**保留而不是删除**：本文件是资源 fallback 链的
-    末端，其它语言（en / de / it 等）解析 app_name 时会落到这里。把它也删掉会让
-    这些语言找不到任何 `app_name`，应用名回落为空标签。因此改成宿主自己的名字，
-    使**所有**语言都得到「游龙安全护盾」。
-
-    该字符串在上游与本工程的全部 Kotlin / XML 代码中**均无任何引用**
-    （已全量检索 R.string.app_name 与 @string/app_name），
-    改值不影响管理器界面。
-  ==========================================================================
--->
 <resources>
 
     <string name="app_name" translatable="false">游龙安全护盾</string>
@@ -406,18 +379,12 @@
     <string name="downloading">Downloading</string>
     <string name="download_failed">Download failed: %s</string>
 
-    <!-- ==================================================================
-         Color source (配色来源) —— 本工程新增。
-         ================================================================== -->
+    
     <string name="color_source">Color source</string>
     <string name="color_mode_brand">Shield brand</string>
     <string name="color_mode_dynamic">Follow wallpaper</string>
 
-    <!-- ==================================================================
-         Command guard (命令安全拦截) —— 本工程新增，上游没有这些字符串。
-         用于 CommandGuardActivity：告知用户某应用的危险命令已被拦截，
-         或就不安全命令征求用户确认。
-         ================================================================== -->
+    
     <string name="command_guard_blocked_title">Command blocked</string>
     <string name="command_guard_blocked_body">%1$s attempted %2$s. It has been blocked.</string>
     <string name="command_guard_confirm_title">Risky command</string>
@@ -429,12 +396,7 @@
     <string name="command_guard_deny">Deny</string>
     <string name="command_guard_unknown_app">Unknown app</string>
 
-    <!-- ==================================================================
-         Open source licenses (开源许可) —— 本工程新增。
-         合规依据：Apache-2.0 第 4(a) 条要求向接收者提供许可证副本、
-         第 4(b) 条要求保留 NOTICE；MPL-2.0 第 3.1/3.2 条要求以
-         Source Code Form 提供被覆盖的源码。
-         ================================================================== -->
+    
     <string name="open_source_licenses">Open Source Licenses</string>
     <string name="open_source_licenses_subtitle">Apache-2.0 &amp; MPL-2.0 full texts and third-party notices</string>
     <string name="open_source_licenses_card_subtitle">View the full Apache-2.0 / MPL-2.0 texts and the list of modified files</string>

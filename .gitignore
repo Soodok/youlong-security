@@ -1,5 +1,5 @@
-# ========== 构建产物（严禁入库） ==========
-# 本工程的构建输出目录是 build_out/（见根 build.gradle 里的自定义 buildDir）
+
+
 build_out/
 /build/
 build/
@@ -7,7 +7,7 @@ build/
 /build-out/
 build-out/
 
-# Native 中间产物
+
 .cxx/
 **/.cxx/
 app/.prefab/
@@ -17,7 +17,7 @@ app/.prefab/
 **/.gradle/
 local.properties
 
-# ========== 签名与密钥（绝对不入库） ==========
+
 *.jks
 *.keystore
 *.jks.*
@@ -29,11 +29,11 @@ signing.gradle
 *.iml
 .vscode/
 
-# ========== 系统 ==========
+
 .DS_Store
 Thumbs.db
 
-# ========== 临时 / 调试产物 ==========
+
 *.log
 *.tmp
 *.apk

@@ -1,8 +1,8 @@
-# 统一换行：仓库内存 LF，检出时按平台自动转换，避免 Windows 上产生大量
-# "LF will be replaced by CRLF" 噪声与无意义的整文件 diff。
+
+
 * text=auto
 
-# ---- 明确按二进制处理的文件（绝不做换行转换）----
+
 *.png  binary
 *.jpg  binary
 *.jpeg binary
@@ -19,7 +19,7 @@
 *.apk  binary
 *.zip  binary
 
-# ---- 文本文件统一 LF（脚本尤其重要）----
+
 *.java   text
 *.kt     text
 *.kts    text

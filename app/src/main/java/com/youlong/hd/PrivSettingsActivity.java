@@ -17,17 +17,7 @@ import android.widget.TextView;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * 自研 · 特权服务设置页（**本应用自己的界面**）。
- *
- * <p>把"特权相关的管理动作"收在一处，替代第三方管理器里的设置界面：
- * <ul>
- *   <li>当前特权状态（连接 / 授权 / 运行身份）；</li>
- *   <li>申请或重新授权；</li>
- *   <li>跑一条特权命令自检，结果直接显示（用户自己能判断"到底通不通"）；</li>
- *   <li>快捷入口：应用列表、系统应用设置页。</li>
- * </ul>
- */
+
 public class PrivSettingsActivity extends AppCompatActivity {
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -71,7 +61,7 @@ public class PrivSettingsActivity extends AppCompatActivity {
         sub.setPadding(0, dp(6), 0, dp(18));
         root.addView(sub);
 
-        // 状态卡
+        
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackgroundColor(Color.WHITE);
@@ -82,7 +72,7 @@ public class PrivSettingsActivity extends AppCompatActivity {
         mStatusTv = addRow(card, "连接状态", "检测中…");
         mAuthTv = addRow(card, "授权状态", "检测中…");
 
-        // 操作按钮
+        
         addButton(root, "申请 / 重新授权", () -> {
             try {
                 roro.stellar.Stellar.INSTANCE.requestPermission("stellar", 1001);
@@ -119,7 +109,7 @@ public class PrivSettingsActivity extends AppCompatActivity {
             }
         });
 
-        // 结果区
+        
         TextView label = new TextView(this);
         label.setText("输出");
         label.setTextSize(13);
@@ -178,17 +168,17 @@ public class PrivSettingsActivity extends AppCompatActivity {
     }
 
     // ==================================================================
-    // 行为
+    
     // ==================================================================
 
     private void refreshStatus() {
-        // 未连接时先请求服务端重投 Binder（应用进程重启后常见），再刷新
+        
         if (!StellarUtils.isPrivilegeBinderAlive()) {
             PrivStatus.requestReconnect(this);
         }
         new Thread(() -> {
-            // 轻量探活：不在界面上等内核冷启动（旧写法会卡几十秒）
-            // 同样只用非阻塞探活（见 PrivilegeActivity.refresh 的说明）
+            
+            
             final boolean alive = StellarUtils.isPrivilegeBinderAlive();
             final boolean granted = alive && StellarUtils.hasStellarPermission();
             mMain.post(() -> {

@@ -12,43 +12,26 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 自研特权内核 · 启动入口（ContentProvider）。
- *
- * <p><b>为什么要一个 ContentProvider</b>：{@code app_process} 拉起服务端时，
- * 服务端的 CLASSPATH 指向本应用 APK，因此它天然能读到这里的所有类；
- * 而"客户端 → 服务端"的第一跳需要一个**双方都在场的会合点**。
- * Provider 跑在应用进程里（因此能读到客户端的 Binder 实例），
- * 又能 fork 出 shell 身份的服务端进程，正好承担这个角色。
- *
- * <p>调用方式（客户端）：{@link #call}
- * <pre>
- *   Bundle args = new Bundle();
- *   args.putBinder(YlHandshake.KEY_HANDSHAKE, YlHandshake.asBinder(...));
- *   resolver.call(YlBootProvider.URI, "start", null, args);
- * </pre>
- *
- * <p>本类被调用时返回服务端 uid 等信息，便于诊断"到底起没起来、是不是 shell"。
- */
+
 public final class YlBootProvider extends ContentProvider {
 
     private static final String TAG = "YlBootProvider";
 
-    /** Provider 的 authority（与清单里声明必须一致）。 */
+    
     public static final String AUTHORITY = "com.youlong.hd.ylpriv";
 
     public static final Uri URI = Uri.parse("content://" + AUTHORITY);
 
-    /** 方法名：拉起服务端并完成握手。 */
+    
     public static final String METHOD_START = "start";
 
-    /** 方法名：只查状态，不起进程。 */
+    
     public static final String METHOD_STATUS = "status";
 
-    /** 服务端启动 + 握手的总超时。 */
+    
     private static final long READY_TIMEOUT_MS = 15_000L;
 
-    /** 防止并发重复拉起。 */
+    
     private static final Object SPAWN_LOCK = new Object();
 
     @Override
@@ -74,7 +57,7 @@ public final class YlBootProvider extends ContentProvider {
             return out;
         }
 
-        // 已经连上 → 直接交付，不重复起进程
+        
         YlKernel kernel = YlKernel.get();
         if (kernel.pingBinder()) {
             YlHandshake.deliver(handshake, kernel.serviceBinder());
@@ -90,7 +73,7 @@ public final class YlBootProvider extends ContentProvider {
                 out.putInt("serverUid", kernel.getServerUid());
                 return out;
             }
-            // 在应用进程内注册握手回调：服务端起来后会把服务 Binder 送回这里
+            
             final CountDownLatch latch = new CountDownLatch(1);
             kernel.armHandshake(handshake, latch);
 
@@ -121,12 +104,12 @@ public final class YlBootProvider extends ContentProvider {
         }
     }
 
-    /** 顺带保证一个可写目录（服务端/诊断用）。 */
+    
     public static File cacheDir(android.content.Context ctx) {
         return YlKernel.ensureDir(new File(ctx.getCacheDir(), "ylpriv"));
     }
 
-    // ==================== ContentProvider 其余抽象方法（本 Provider 只做 IPC）====================
+    
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,

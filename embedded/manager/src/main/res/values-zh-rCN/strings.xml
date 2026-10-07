@@ -375,18 +375,12 @@
     <string name="downloading">下载中</string>
     <string name="download_failed">下载失败: %s</string>
 
-    <!-- ==================================================================
-         配色来源（本工程新增）—— 设置页「个性化」里的二选一。
-         ================================================================== -->
+    
     <string name="color_source">配色来源</string>
     <string name="color_mode_brand">护盾品牌色</string>
     <string name="color_mode_dynamic">跟随壁纸</string>
 
-    <!-- ==================================================================
-         命令安全拦截 —— 本工程新增，上游没有这些字符串。
-         用于 CommandGuardActivity：告知用户某应用的危险命令已被拦截，
-         或就不安全命令征求用户确认。
-         ================================================================== -->
+    
     <string name="command_guard_blocked_title">命令已被拦截</string>
     <string name="command_guard_blocked_body">%1$s 尝试 %2$s，已被拦截。</string>
     <string name="command_guard_confirm_title">危险操作</string>
@@ -398,12 +392,7 @@
     <string name="command_guard_deny">拒绝</string>
     <string name="command_guard_unknown_app">未知应用</string>
 
-    <!-- ==================================================================
-         开源许可 —— 本工程新增。
-         合规依据：Apache-2.0 第 4(a) 条要求向接收者提供许可证副本、
-         第 4(b) 条要求保留 NOTICE；MPL-2.0 第 3.1/3.2 条要求以
-         Source Code Form 提供被覆盖的源码。
-         ================================================================== -->
+    
     <string name="open_source_licenses">开源许可</string>
     <string name="open_source_licenses_subtitle">Apache-2.0 与 MPL-2.0 许可证全文及第三方声明</string>
     <string name="open_source_licenses_card_subtitle">查看 Apache-2.0 / MPL-2.0 全文与已修改文件清单</string>

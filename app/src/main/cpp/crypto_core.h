@@ -1,19 +1,19 @@
 // ============================================================
-// 游龙加密核心 - 纯 C 自实现（零外部依赖）
+
 // YouLong Crypto Core (Self-Implemented, Zero Dependencies)
 // ============================================================
-// 内容：
-//   1. SHA-256（FIPS 180-4）
-//   2. AES-256 加密方向（FIPS 197）
-//   3. GCM 认证解密（NIST SP 800-38D，12B IV / 128-bit tag / 空 AAD）
-//   4. 种子密钥 & HMAC 盐混淆存储（XOR 掩码，hexdump 不可直读）
-//   5. 密钥派生 KDF：SHA-256(seed || salt || certFingerprint)
+
+
+
+
+
+
 //
-// 与 Java 层 javax.crypto "AES/GCM/NoPadding" 完全兼容，
-// 确保构建期加密的资产可在运行时被本核心解密。
+
+
 //
-// 依赖：仅标准 C 头文件（无 OpenSSL、无 JNI、无 Android 头），
-//       可直接在任何平台编译做单元测试（见 build-out/test_native_crypto.c）。
+
+
 // ============================================================
 
 #ifndef YOULONG_CRYPTO_CORE_H
@@ -22,8 +22,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// 不依赖 <string.h>：freestanding 环境（wasm 测试）无 libc 头。
-// memcpy/memset 符号由平台提供（Android bionic / 测试自实现）。
+
+
 extern void* memcpy(void* dst, const void* src, size_t n);
 extern void* memset(void* dst, int c, size_t n);
 
@@ -31,42 +31,42 @@ extern void* memset(void* dst, int c, size_t n);
 extern "C" {
 #endif
 
-// 防编译器优化擦除（volatile 内存写，保证密钥销毁真正生效）
+
 static void secure_clear(void* p, size_t n) {
     volatile uint8_t* vp = (volatile uint8_t*)p;
     while (n--) *vp++ = 0;
 }
 
 // ============================================================
-// 混淆常量存储：种子密钥 & HMAC盐
+
 // ============================================================
-// 【开源版已替换为占位值】
-// ----------------------------------------------------------------------------
-// 正式发布版里这两个数组是**真实密钥材料**（密文形式），它与 APK 签名证书指纹
-// 一起经 SHA-256 派生出内置前端资源（assets）的 AES-256-GCM 密钥：
-//      密钥 = SHA-256(种子 || 盐 || 证书指纹)
-// 因此换签名 / 泄露种子都等于资源可被直接解密。
-//
-// 按作者要求，开源包**不包含资源加密密钥，也不包含签名材料**：
-//   · 这里 16 字节全部换成占位值 0x00（下面的 XOR 掩码逻辑保持不变，
-//     接回自有密钥时把真实密文填回 SEED_KEY_CIPHER / HMAC_SALT_CIPHER 即可）；
-//   · 开源版内置前端资源以**明文**随包分发（见 app/src/main/assets/index.html），
-//     运行期不再做任何解密（见 MainActivity.decryptAndServe）。
+
 // ----------------------------------------------------------------------------
 
-// 掩码生成：从一段魔数序列派生（非线性，增加逆向难度）
+
+
+
+//
+
+
+
+
+
+// ----------------------------------------------------------------------------
+
+
 static const uint8_t MASK_ORIGIN[16] = {
     0x5A, 0x3C, 0xF1, 0x27, 0x8E, 0x4B, 0xD6, 0x0F,
     0x39, 0xA8, 0x7E, 0xC4, 0x15, 0x92, 0x6D, 0xB3
 };
 
-// 种子密钥密文（SEED_KEY XOR 掩码）—— 开源版：占位值，非真实密钥
+
 static const uint8_t SEED_KEY_CIPHER[16] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-// HMAC 盐密文（HMAC_SALT XOR 掩码）—— 开源版：占位值，非真实密钥
+
 static const uint8_t HMAC_SALT_CIPHER[16] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -77,7 +77,7 @@ static uint8_t mask_byte(int i) {
     return (uint8_t)(MASK_ORIGIN[i] ^ MASK_ORIGIN[(i + 7) % 16] ^ 0x3D);
 }
 
-// 读取混淆的种子密钥（返回 16 字节，内部静态缓冲）
+
 static const uint8_t* get_seed_key() {
     static uint8_t buf[16];
     for (int i = 0; i < 16; i++) {
@@ -95,7 +95,7 @@ static const uint8_t* get_hmac_salt() {
 }
 
 // ============================================================
-// SHA-256（FIPS 180-4）
+
 // ============================================================
 typedef struct {
     uint32_t state[8];
@@ -184,7 +184,7 @@ static void sha256_final(sha256_context* ctx, uint8_t out[32]) {
 }
 
 // ============================================================
-// AES-256 加密方向（FIPS 197，Nk=8 / Nr=14）
+
 // ============================================================
 static const uint8_t SBOX[256] = {
     0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
@@ -240,10 +240,10 @@ static void aes_sub_bytes(uint8_t* state) {
 
 static void aes_shift_rows(uint8_t* s) {
     uint8_t t;
-    t = s[1];  s[1] = s[5];  s[5] = s[9];  s[9] = s[13];  s[13] = t;  // 行1 左移1
-    t = s[2];  s[2] = s[10]; s[10] = t;                                 // 行2 左移2
+    t = s[1];  s[1] = s[5];  s[5] = s[9];  s[9] = s[13];  s[13] = t;  
+    t = s[2];  s[2] = s[10]; s[10] = t;                                 
     t = s[6];  s[6] = s[14]; s[14] = t;
-    t = s[15]; s[15] = s[11]; s[11] = s[7]; s[7] = s[3]; s[3] = t;      // 行3 左移3
+    t = s[15]; s[15] = s[11]; s[11] = s[7]; s[7] = s[3]; s[3] = t;      
 }
 
 static void aes_mix_columns(uint8_t* s) {
@@ -279,38 +279,38 @@ static void aes256_encrypt_block(const uint8_t key[32], const uint8_t in[16], ui
 }
 
 // ============================================================
-// GCM 辅助：GF(2^128) 乘法（NIST SP 800-38D）
-// 位序：块 = B0 B1 ... B127，B0 是最左位（MSB）。
-//   - 第 i 位 = byte[i>>3] 的 bit (7 - (i&7))
-//   - 乘法中 V>>1 = 数值右移：新 byte[j] bit7 = 旧 byte[j-1] bit0
-//   - V127（判断规约）= LSB = byte15 的 bit0
-//   - R = 11100001||0^120 → 最左字节 byte0 = 0xE1
+
+
+
+
+
+
 // ============================================================
 static void gcm_mul(uint8_t z[16], const uint8_t x[16], const uint8_t y[16]) {
     uint8_t v[16];
     memcpy(v, x, 16);
     memset(z, 0, 16);
     for (int i = 0; i < 128; i++) {
-        int ybit = (y[i >> 3] >> (7 - (i & 7))) & 1;   // 第 i 位（从 MSB 数）
+        int ybit = (y[i >> 3] >> (7 - (i & 7))) & 1;   
         if (ybit) {
             for (int j = 0; j < 16; j++) z[j] ^= v[j];
         }
         uint8_t top = (uint8_t)(v[15] & 1);            // V127 = LSB = byte15 bit0
-        // V = V >> 1（数值右移，进位从高字节向低字节传播）
+        
         uint8_t carry = 0;
         for (int j = 0; j < 16; j++) {
             uint8_t low_bit = (uint8_t)(v[j] & 1);
             v[j] = (uint8_t)((v[j] >> 1) | (carry << 7));
             carry = low_bit;
         }
-        if (top) v[0] ^= 0xE1; // 规约多项式 R = 0xE1 || 0^120 → byte0 = 0xE1
+        if (top) v[0] ^= 0xE1; 
     }
     secure_clear(v, sizeof(v));
 }
 
 // ============================================================
-// 密钥派生：SHA-256(seed || salt || certFingerprint)
-// 与 Java 层 javaFallbackDeriveKey / 构建期加密 KDF 完全一致
+
+
 // ============================================================
 static void derive_key(const uint8_t* certFp, int fpLen, uint8_t out[32]) {
     const uint8_t* seed = get_seed_key();
@@ -325,16 +325,16 @@ static void derive_key(const uint8_t* certFp, int fpLen, uint8_t out[32]) {
     }
     sha256_final(&ctx, out);
 
-    // 立即擦除派生中间态
+    
     secure_clear((void*)seed, 16);
     secure_clear((void*)salt, 16);
 }
 
 // ============================================================
-// AES-256-GCM 解密（NIST SP 800-38D，与 javax.crypto 兼容）
-// 输入: key[32], iv[12], ciphertext(encLen + 16B tag)
-// 输出: plaintext 缓冲区（调用方负责释放 & 擦除）
-// 返回: 明文长度; -1 参数错误; -2 缓冲不足; -3 认证失败
+
+
+
+
 // ============================================================
 static int aes_gcm_decrypt(const uint8_t* key, const uint8_t* iv,
                            const uint8_t* ciphertext, int ctLen,
@@ -351,7 +351,7 @@ static int aes_gcm_decrypt(const uint8_t* key, const uint8_t* iv,
     memcpy(j0, iv, 12);
     j0[12] = 0; j0[13] = 0; j0[14] = 0; j0[15] = 1;
 
-    // ---- GHASH_H(C)（AAD 为空）----
+    
     uint8_t x[16] = {0};
     uint8_t tmp[16];
     int full = encLen / 16;
@@ -366,7 +366,7 @@ static int aes_gcm_decrypt(const uint8_t* key, const uint8_t* iv,
         gcm_mul(tmp, x, h);
         memcpy(x, tmp, 16);
     }
-    // len 块：len(A)=0(64bit) || len(C) 位长(64bit, 大端)
+    
     uint8_t lenblock[16] = {0};
     uint64_t cbits = (uint64_t)encLen * 8;
     for (int i = 0; i < 8; i++) lenblock[8 + i] = (uint8_t)(cbits >> (8 * (7 - i)));
@@ -379,17 +379,17 @@ static int aes_gcm_decrypt(const uint8_t* key, const uint8_t* iv,
     aes256_encrypt_block(key, j0, tagcalc);
     for (int j = 0; j < 16; j++) tagcalc[j] ^= x[j];
 
-    // 恒定时间标签比较
+    
     uint8_t diff = 0;
     for (int j = 0; j < 16; j++) diff |= (uint8_t)(tagcalc[j] ^ ciphertext[encLen + j]);
     if (diff != 0) {
         secure_clear(h, sizeof(h));
         secure_clear(x, sizeof(x));
         secure_clear(tagcalc, sizeof(tagcalc));
-        return -3; // 认证失败
+        return -3; 
     }
 
-    // ---- CTR 解密：KS_j = E_K(inc32(J0, j))，P = C XOR KS ----
+    
     uint8_t counter[16];
     memcpy(counter, j0, 16);
     int pos = 0;

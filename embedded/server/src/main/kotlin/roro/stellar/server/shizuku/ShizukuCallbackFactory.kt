@@ -90,7 +90,7 @@ object ShizukuCallbackFactory {
                 val lastDenyTime = clientManager.findClient(uid, pid)?.lastDenyTimeMap?.get(ShizukuApiConstants.PERMISSION_NAME) ?: 0
                 val denyOnce = (System.currentTimeMillis() - lastDenyTime) > 10000
 
-                // 登记「本次 shizuku 授权待用户确认」：只有登记过的请求，其结果回传才会被采信
+                
                 PendingPermissionConfirmations.register(
                     requestCode,
                     uid,

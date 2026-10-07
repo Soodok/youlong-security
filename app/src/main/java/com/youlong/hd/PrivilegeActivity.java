@@ -19,21 +19,12 @@ import android.widget.TextView;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * 自研 · 特权服务面板（**本应用的界面，不是第三方管理器的界面**）。
- *
- * <p>替代原先"打开特权服务管理器"跳转到内置第三方管理器 UI 的做法：
- * 这里用本应用自己的配色、排版与文案，把用户真正需要的东西放在一屏里：
- * 连接状态、特权身份、授权状态与授权入口、以及一条可当场验证的特权命令。
- *
- * <p>它只调用特权内核的**公开 API**（{@code StellarUtils} / {@code Stellar}），
- * 不碰内核内部实现，因此内核换实现时本页无需改动。
- */
+
 public class PrivilegeActivity extends AppCompatActivity {
 
     private static final String TAG = "PrivilegePanel";
 
-    /** 授权记录（与 MainActivity 里授权相关流程共用同一份偏好，便于状态一致）。 */
+    
     private static final String PREFS = "shield_prefs";
     private static final String KEY_GRANTED = "priv_granted";
 
@@ -43,7 +34,12 @@ public class PrivilegeActivity extends AppCompatActivity {
     private TextView mStatusValue;
     private TextView mIdentityValue;
     private TextView mAuthValue;
+    private TextView mSourceValue;
+    private TextView mShizukuValue;
     private TextView mResultValue;
+    private Button mBtnSource;
+    private Button mBtnExternal;
+    private Button mBtnShizukuAuth;
     private Button mBtnRequest;
     private Button mBtnTest;
 
@@ -55,17 +51,7 @@ public class PrivilegeActivity extends AppCompatActivity {
         refresh();
     }
 
-    /**
-     * 只读自检：把面板要显示的三行状态直接输出到日志。
-     *
-     * <p>为什么需要它：面板本身 {@code exported=false}（只有本应用能打开），
-     * 自动化测试没法从外部 startActivity 去核对界面内容；
-     * 这个方法让同一套逻辑可以被"调用一次 + 读日志"验证，
-     * 不需要为了测试把界面对外开放。
-     *
-     * <p>调用方式（仅调试用）：
-     * {@code adb shell am broadcast -a com.youlong.hd.PRIV_SELFTEST -n com.youlong.hd/.PrivSelfTestReceiver}
-     */
+    
     public void runSelfTestAndLog() {
         new Thread(() -> {
             PrivStatus.Snapshot s = PrivStatus.collect();
@@ -78,7 +64,7 @@ public class PrivilegeActivity extends AppCompatActivity {
     }
 
     // ==================================================================
-    // 界面（全部由本应用自己搭建，不引用任何第三方界面代码）
+    
     // ==================================================================
 
     private View buildContentView() {
@@ -94,7 +80,7 @@ public class PrivilegeActivity extends AppCompatActivity {
         scroll.addView(root, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // 标题区
+        
         TextView title = new TextView(this);
         title.setText("特权服务");
         title.setTextSize(24);
@@ -109,7 +95,7 @@ public class PrivilegeActivity extends AppCompatActivity {
         subtitle.setPadding(0, dp(6), 0, dp(18));
         root.addView(subtitle);
 
-        // 状态卡片
+        
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackgroundColor(Color.WHITE);
@@ -120,8 +106,30 @@ public class PrivilegeActivity extends AppCompatActivity {
         mStatusValue = addRow(card, "连接状态", "检测中…");
         mIdentityValue = addRow(card, "运行身份", "检测中…");
         mAuthValue = addRow(card, "授权状态", "检测中…");
+        
+        mSourceValue = addRow(card, "特权来源", "检测中…");
+        mShizukuValue = addRow(card, "Shizuku 协议", "检测中…");
 
-        // 按钮区
+        
+        
+        
+        
+        Button btnPair = new Button(this);
+        btnPair.setText("无线调试配对（免电脑启动特权服务）");
+        btnPair.setTextSize(16);
+        btnPair.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(this, AdbPairActivity.class));
+            } catch (Throwable t) {
+                CrashLogger.event("[特权面板] 打开无线配对页失败", t);
+            }
+        });
+        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        plp.topMargin = dp(18);
+        btnPair.setLayoutParams(plp);
+        root.addView(btnPair);
+
         mBtnRequest = new Button(this);
         mBtnRequest.setText("申请特权授权");
         mBtnRequest.setTextSize(16);
@@ -131,6 +139,37 @@ public class PrivilegeActivity extends AppCompatActivity {
         rp.topMargin = dp(18);
         mBtnRequest.setLayoutParams(rp);
         root.addView(mBtnRequest);
+
+        
+        mBtnSource = new Button(this);
+        mBtnSource.setText("切换特权来源");
+        mBtnSource.setTextSize(16);
+        mBtnSource.setOnClickListener(v -> onSwitchSource());
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        slp.topMargin = dp(10);
+        mBtnSource.setLayoutParams(slp);
+        root.addView(mBtnSource);
+
+        mBtnExternal = new Button(this);
+        mBtnExternal.setText("允许外部 Shizuku 投递特权");
+        mBtnExternal.setTextSize(16);
+        mBtnExternal.setOnClickListener(v -> onToggleExternalShizuku());
+        LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        elp.topMargin = dp(10);
+        mBtnExternal.setLayoutParams(elp);
+        root.addView(mBtnExternal);
+
+        mBtnShizukuAuth = new Button(this);
+        mBtnShizukuAuth.setText("申请 Shizuku 授权");
+        mBtnShizukuAuth.setTextSize(16);
+        mBtnShizukuAuth.setOnClickListener(v -> onRequestShizukuPermission());
+        LinearLayout.LayoutParams shp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        shp.topMargin = dp(10);
+        mBtnShizukuAuth.setLayoutParams(shp);
+        root.addView(mBtnShizukuAuth);
 
         mBtnTest = new Button(this);
         mBtnTest.setText("自检：跑一条特权命令");
@@ -179,7 +218,7 @@ public class PrivilegeActivity extends AppCompatActivity {
         sp.topMargin = dp(10);
         btnSettings.setLayoutParams(sp);
         root.addView(btnSettings);
-        // 结果区
+        
         TextView resultLabel = new TextView(this);
         resultLabel.setText("命令输出");
         resultLabel.setTextSize(13);
@@ -209,7 +248,7 @@ public class PrivilegeActivity extends AppCompatActivity {
         return scroll;
     }
 
-    /** 加一行"标签 + 值"，返回值那一栏方便后续刷新。 */
+    
     private TextView addRow(LinearLayout parent, String label, String value) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -236,34 +275,32 @@ public class PrivilegeActivity extends AppCompatActivity {
     }
 
     // ==================================================================
-    // 行为
+    
     // ==================================================================
 
-    /**
-     * 刷新三行状态。
-     *
-     * <p><b>性能红线（2026-10-05 修复"打开就卡死"）</b>：这里**只能**用
-     * {@link StellarUtils#isPrivilegeBinderAlive()} 这种毫秒级探活。
-     * 之前用的是 {@link StellarUtils#isStellarAvailable()} —— 它内部会等内核冷启动
-     * （最长十几秒），一旦服务端没起，界面就会一直转圈、滑动直接卡死。
-     * 需要真正连服务端时，走 {@link #onSelfTest()} / 「重新连接」按钮的异步路径。
-     */
+    
     private void refresh() {
-        // 未连接时请服务端重投一次 Binder（应用进程重启后常见）；这是发广播，立即返回
+        
         if (!StellarUtils.isPrivilegeBinderAlive()) {
             PrivStatus.requestReconnect(this);
         }
         new Thread(() -> {
-            // 全部用非阻塞探活，任何一步都不许等
+            
             final boolean available = StellarUtils.isPrivilegeBinderAlive();
             final boolean granted = available && StellarUtils.hasStellarPermission();
+            final String sourceName = PrivRouter.activeName(this);
+            final int sourceMode = PrivRouter.getSource(this);
+            final boolean externalAllowed = PrivRouter.isExternalShizukuAllowed(this);
+            final boolean shizukuAlive = PrivRouter.shizukuAlive();
+            final boolean shizukuGranted = shizukuAlive && ShizukuBackend.hasPermission();
+            final boolean shizukuInstalled = ShizukuBackend.isManagerInstalled(this);
             final String identity;
             if (!available) {
                 identity = "未连接（点下方按钮重连）";
             } else if (!granted) {
                 identity = "已连接，待授权";
             } else {
-                // 只有连上且已授权时，才去跑一条命令确认身份（此时是快的）
+                
                 String out = StellarUtils.runCommand("id -u", 3000);
                 identity = "uid=" + (TextUtils.isEmpty(out) ? "?" : out.trim()) + "（shell 为 2000）";
             }
@@ -275,19 +312,89 @@ public class PrivilegeActivity extends AppCompatActivity {
                 mAuthValue.setTextColor(granted ? 0xFF34C759 : 0xFFFF9500);
                 mBtnRequest.setEnabled(!granted);
                 mBtnRequest.setText(granted ? "已授权" : "申请特权授权");
+
+                
+                String mode = sourceMode == PrivRouter.SOURCE_BUILTIN ? "固定内置"
+                        : sourceMode == PrivRouter.SOURCE_SHIZUKU ? "固定 Shizuku" : "自动";
+                mSourceValue.setText(sourceName + "（" + mode + "）");
+                mSourceValue.setTextColor(available ? 0xFF34C759 : 0xFFFF9500);
+
+                StringBuilder sb = new StringBuilder();
+                if (shizukuAlive) {
+                    int uid = ShizukuBackend.serverUid();
+                    sb.append(shizukuGranted ? "已连接已授权" : "已连接待授权");
+                    if (uid > 0) sb.append("，服务端 uid=").append(uid);
+                } else if (shizukuInstalled) {
+                    sb.append("已安装 Shizuku，未连接（打开 Shizuku 启动服务后回来刷新）");
+                } else {
+                    sb.append("未检测到 Shizuku / Sui（可用内置内核）");
+                }
+                if (externalAllowed) sb.append(" · 已允许外部投递");
+                mShizukuValue.setText(sb.toString());
+                mShizukuValue.setTextColor(shizukuAlive ? 0xFF34C759 : 0xFF8E8E93);
+
+                mBtnSource.setText("切换特权来源（当前：" + mode + "）");
+                mBtnExternal.setText(externalAllowed
+                        ? "禁止外部 Shizuku 投递（当前：已允许）"
+                        : "允许外部 Shizuku 投递（当前：已禁止）");
+                mBtnShizukuAuth.setEnabled(shizukuAlive && !shizukuGranted);
+                mBtnShizukuAuth.setText(!shizukuAlive ? "申请 Shizuku 授权（未连接）"
+                        : shizukuGranted ? "Shizuku 已授权" : "申请 Shizuku 授权");
             });
         }, "priv-refresh").start();
     }
 
-    /** 申请授权：走内核的公开授权入口。 */
+    // ==================================================================
+    
+    // ==================================================================
+
+    
+    private void onSwitchSource() {
+        int next;
+        switch (PrivRouter.getSource(this)) {
+            case PrivRouter.SOURCE_AUTO:    next = PrivRouter.SOURCE_BUILTIN; break;
+            case PrivRouter.SOURCE_BUILTIN: next = PrivRouter.SOURCE_SHIZUKU; break;
+            default:                        next = PrivRouter.SOURCE_AUTO; break;
+        }
+        PrivRouter.setSource(this, next);
+        CrashLogger.event("[特权来源] 切换为 " + PrivRouter.sourceName(this));
+        refresh();
+    }
+
+    
+    private void onToggleExternalShizuku() {
+        boolean now = PrivRouter.isExternalShizukuAllowed(this);
+        PrivRouter.setExternalShizukuAllowed(this, !now);
+        mResultValue.setText(!now
+                ? "已允许外部 Shizuku 投递。\n\n说明：只有在设备上装了官方 Shizuku"
+                  + "（moe.shizuku.privileged.api）并启动其服务后，本应用才会通过"
+                  + " Shizuku 协议拿到特权 Binder；其它应用的投递一律拒绝。"
+                : "已禁止外部 Shizuku 投递，仅使用内置内核。");
+        refresh();
+    }
+
+    
+    private void onRequestShizukuPermission() {
+        if (!PrivRouter.shizukuAlive()) {
+            CrashLogger.event("[特权来源] Shizuku 未连接，无法申请授权");
+            mResultValue.setText("Shizuku 未连接：请先安装并启动 Shizuku（或 Sui），"
+                    + "然后回到本页点「重新连接特权服务」。");
+            return;
+        }
+        ShizukuBackend.requestPermission(1002);
+        CrashLogger.event("[特权来源] 已通过 Shizuku 协议发起授权请求");
+        mMain.postDelayed(this::refresh, 1500);
+    }
+
+    
     private void onRequestPermission() {
         try {
-            // 记录一次"用户发起过授权"，便于主界面提示
+            
             SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
             sp.edit().putBoolean(KEY_GRANTED, false).apply();
 
-            // 内核的授权入口：未授权时服务端会拉起授权弹窗（现在由本应用自研的
-            // PrivAuthActivity 接管呈现，见 app/src/main/AndroidManifest.xml）。
+            
+            
             roro.stellar.Stellar.INSTANCE.requestPermission("stellar", 1001);
         } catch (Throwable t) {
             CrashLogger.event("[特权面板] 申请授权失败: " + t);
@@ -295,7 +402,7 @@ public class PrivilegeActivity extends AppCompatActivity {
         mMain.postDelayed(this::refresh, 1200);
     }
 
-    /** 自检：跑一条特权命令并把原始输出显示出来。 */
+    
     private void onSelfTest() {
         if (!mBusy.compareAndSet(false, true)) return;
         mResultValue.setText("执行中…");

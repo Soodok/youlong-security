@@ -10,7 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-// ⚠️ 本工程新增导入（第六轮）：权限确认弹窗用 Material 图标替代 Stellar 图标。
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.foundation.layout.Arrangement
@@ -231,11 +231,11 @@ fun PermissionRequestDialog(
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    // ⚠️ 本工程改动（第六轮）：这里上游显示的是 Stellar 图标
-                    //    （R.drawable.ic_stellar）。本工程按需求去除 Stellar 图标，
-                    //    改用 Material 的 Security 图标。
-                    //    不用 R.mipmap.ic_launcher 是因为启动图标在 :app 模块里，
-                    //    :manager 库模块编译期看不到宿主的 mipmap 资源表。
+                    
+                    
+                    
+                    
+                    
                     Icon(
                         imageVector = Icons.Default.Security,
                         contentDescription = null,

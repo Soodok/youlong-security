@@ -22,22 +22,7 @@ import androidx.core.content.ContextCompat;
 import java.io.File;
 import java.util.List;
 
-/**
- * 哨兵守护服务 — 运行在独立进程（:guard）
- *
- * "哨兵"机制核心：与主进程 ProtectService 互相监视，兄弟被杀立即复活。
- * 三重保障：
- *   1. 守护线程每 5 秒用 ActivityManager 检查主进程 ProtectService，
- *      发现被杀立即 startForegroundService 拉起；
- *   2. 动态注册 ACTION_TIME_TICK（系统每分钟广播，不经 AlarmManager，
- *      厂商省电策略无法延迟前台进程接收）；
- *   3. Native fork 子进程（GuardNative.startSentinel）：C 层独立进程
- *      实时监视主进程/哨兵进程存活，兄弟死亡立即写标记文件，
- *      Java 层轮询核实后拉起。
- *
- * 本进程（哨兵）被杀 → 主进程 ProtectService 的 tick 循环检测到并拉起
- * （ProtectService 内实现，构成双向守护）。
- */
+
 public class ForegroundService extends Service {
     private static final String TAG = "GuardService";
     private static final String CHANNEL_ID = "guard_channel";
@@ -54,12 +39,12 @@ public class ForegroundService extends Service {
         createChannel();
         startForeground(NOTIFY_ID, buildNotify());
 
-        // 动态注册系统每分钟广播：不依赖 AlarmManager
+        
         tickReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context c, Intent i) {
                 checkAndRevive("TIME_TICK");
-                // 同步刷新"已开启守护多久"（系统每分钟发一次，成本极低）
+                
                 updateNotify();
             }
         };
@@ -68,7 +53,7 @@ public class ForegroundService extends Service {
             registerReceiver(tickReceiver, f);
         } catch (Exception ignored) {}
 
-        // Native fork 哨兵：独立 C 子进程监视兄弟存活
+        
         try {
             GuardNative.startSentinel(findMainProcessPid(), Process.myPid(),
                     getFilesDir().getAbsolutePath());
@@ -80,9 +65,7 @@ public class ForegroundService extends Service {
         Log.i(TAG, "哨兵服务启动 pid=" + Process.myPid());
     }
 
-    /**
-     * 哨兵通知：显示"已开启守护多久"（与主服务通知保持一致）
-     */
+    
     private Notification buildNotify() {
         SharedPreferences sp = getSharedPreferences("shield_prefs", MODE_PRIVATE);
         long start = sp.getLong("protect_start_time", 0L);
@@ -116,7 +99,7 @@ public class ForegroundService extends Service {
         } catch (Exception ignored) {}
     }
 
-    /** 守护时长格式化：X天X小时X分钟 / X小时X分钟 / X分钟 */
+    
     private String formatDuration(long ms) {
         if (ms < 0) ms = 0;
         long totalMin = ms / 60000L;
@@ -134,7 +117,7 @@ public class ForegroundService extends Service {
         while (running) {
             try {
                 long now = System.currentTimeMillis();
-                // 主进程 PID 可能变化，每 30 秒刷新 native 哨兵监视目标
+                
                 if (now - lastPidUpdate > 30_000) {
                     lastPidUpdate = now;
                     try {
@@ -154,9 +137,9 @@ public class ForegroundService extends Service {
         }
     }
 
-    /** 主检查：主进程被杀则拉起；native 哨兵标记核实后清除 */
+    
     private void checkAndRevive(String from) {
-        // 开关全关 = 用户已关闭守护 → 哨兵退场（自身停止，不拉起任何东西）
+        
         if (!anyTriggerOn()) {
             stopSelf();
             return;
@@ -168,7 +151,7 @@ public class ForegroundService extends Service {
                 ContextCompat.startForegroundService(this, si);
             } catch (Exception ignored) {}
         }
-        // native 哨兵标记：主进程曾死 → 核实已恢复运行则清除
+        
         try {
             File md = new File(getFilesDir(), "sentinel_main_dead");
             if (md.exists() && isServiceRunning(ProtectService.class)) {
@@ -177,7 +160,7 @@ public class ForegroundService extends Service {
         } catch (Exception ignored) {}
     }
 
-    /** 任一开关开启？ */
+    
     private boolean anyTriggerOn() {
         SharedPreferences sp = getSharedPreferences("shield_prefs", Context.MODE_MULTI_PROCESS);
         return sp.getBoolean("protect_on", false)
@@ -185,7 +168,7 @@ public class ForegroundService extends Service {
                 || sp.getBoolean("volume_trigger_on", false);
     }
 
-    /** 主进程 PID（com.youlong.hd，不含 :guard 后缀），找不到返回 -1 */
+    
     private int findMainProcessPid() {
         try {
             ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);

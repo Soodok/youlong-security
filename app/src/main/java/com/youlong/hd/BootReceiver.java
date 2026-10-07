@@ -11,10 +11,7 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-/**
- * 开机自启 - 检查 SharedPreferences 中的 protect_on 状态，若开启则启动 ProtectService
- * 同时设置 AlarmManager 保活闹钟（每2分钟检查一次）
- */
+
 public class BootReceiver extends BroadcastReceiver {
 
     private static final String TAG = "BootReceiver";
@@ -32,10 +29,10 @@ public class BootReceiver extends BroadcastReceiver {
         if (protectOn) {
             Intent serviceIntent = new Intent(context, ProtectService.class);
             ContextCompat.startForegroundService(context, serviceIntent);
-            // 仅在守护开启时设置保活闹钟
+            
             setupKeepAliveAlarm(context);
         } else {
-            // 守护关闭时取消保活闹钟
+            
             cancelKeepAliveAlarm(context);
         }
     }

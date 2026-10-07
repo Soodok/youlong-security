@@ -41,7 +41,7 @@ public class DownloadManager {
     private String pendingDownloadUrl;
     private String pendingFileName;
     private Uri pendingDestinationUri;
-    private String pendingBlobData; // blob: 下载转为 base64 后暂存在此
+    private String pendingBlobData; 
 
     public DownloadManager(Activity activity) {
         this.activity = activity;
@@ -90,10 +90,7 @@ public class DownloadManager {
         startFilePicker();
     }
 
-    /**
-     * 预准备 blob: URL 下载 —— 仅记录 url 和文件名，等待 WebView JS 回传 base64 数据。
-     * 当 onBlobDataReceived() 被调用后，才会弹出文件选择器。
-     */
+    
     public void prepareBlobDownload(String blobUrl, String userAgent, String contentDisposition, String mimeType) {
         pendingBlobData = null;
         pendingDownloadUrl = blobUrl;
@@ -105,9 +102,7 @@ public class DownloadManager {
         pendingFileName = fileName;
     }
 
-    /**
-     * WebView JS 回传 blob 的 base64 数据后调用，弹出文件选择器。
-     */
+    
     public void onBlobDataReceived(String base64Data) {
         pendingBlobData = base64Data;
 
@@ -176,7 +171,7 @@ public class DownloadManager {
     public void handlePermissionResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == POST_NOTIFICATIONS_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // 权限授予后继续下载流程（普通下载或 blob 下载）
+                
                 startFilePicker();
             } else {
                 Toast.makeText(activity, "没有通知权限，无法显示下载进度", Toast.LENGTH_LONG).show();
@@ -186,14 +181,14 @@ public class DownloadManager {
 
     private void startDownload(String url, String fileName, Uri destinationUri) {
         if (url != null && url.startsWith("blob:") && pendingBlobData != null) {
-            // blob 下载：解码 base64 写入文件
+            
             BlobDownloadTask task = new BlobDownloadTask(pendingBlobData, fileName, destinationUri);
             activeDownloads.put(fileName, task);
             executorService.execute(task);
             showStartNotification(fileName);
             pendingBlobData = null;
         } else {
-            // 普通 HTTP 下载
+            
             DownloadTask task = new DownloadTask(url, fileName, destinationUri);
             activeDownloads.put(fileName, task);
             executorService.execute(task);
@@ -291,9 +286,7 @@ public class DownloadManager {
         }
     }
 
-    /**
-     * Blob 下载任务：将 base64 DataURL 解码为二进制数据写入目标文件。
-     */
+    
     private class BlobDownloadTask implements Runnable {
         private String base64Data;
         private String fileName;
@@ -309,7 +302,7 @@ public class DownloadManager {
         public void run() {
             OutputStream output = null;
             try {
-                // 解析 base64 DataURL：data:[<mime>];base64,<data>
+                
                 String base64 = base64Data;
                 int commaIndex = base64.indexOf(',');
                 if (commaIndex >= 0) {

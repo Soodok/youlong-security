@@ -24,11 +24,7 @@ import android.view.WindowManager;
 
 import androidx.core.app.NotificationCompat;
 
-/**
- * FPS帧率监测悬浮窗服务
- * 使用 WindowManager 添加系统级悬浮窗，退出应用后依然显示。
- * 通过 Choreographer.FrameCallback 测量真实帧率。
- */
+
 public class FpsMonitorService extends Service {
 
     private static final String CHANNEL_ID = "fps_monitor_channel";
@@ -40,7 +36,7 @@ public class FpsMonitorService extends Service {
     private static volatile boolean running = false;
 
     // ============================================================
-    // 自定义悬浮视图：胶囊形 FPS 显示器
+    
     // ============================================================
 
     private static class FpsOverlayView extends View implements Choreographer.FrameCallback {
@@ -54,20 +50,20 @@ public class FpsMonitorService extends Service {
         private final RectF closeRect = new RectF();
         private final Handler handler = new Handler(Looper.getMainLooper());
 
-        // FPS 计算
+        
         private long lastFrameTimeNs = 0;
         private final long[] frameDeltas = new long[30];
         private int frameIndex = 0;
         private int frameCount = 0;
         private int currentFps = 0;
 
-        // 拖拽
+        
         private float dragStartX, dragStartY;
         private float initialX, initialY;
         private boolean isDragging = false;
         private static final int DRAG_THRESHOLD = 10;
 
-        // 尺寸 (dp → px 在 onAttachedToWindow 中计算)
+        
         private float density;
         private float capsuleW;
         private float capsuleH;
@@ -109,7 +105,7 @@ public class FpsMonitorService extends Service {
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
             density = getResources().getDisplayMetrics().density;
-            // 胶囊尺寸
+            
             paddingH = 14 * density;
             paddingV = 7 * density;
             textSize = 14 * density;
@@ -119,12 +115,12 @@ public class FpsMonitorService extends Service {
             textPaint.setTextSize(textSize);
             closeTextPaint.setTextSize(10 * density);
 
-            // 测量文本宽度确定胶囊宽度
+            
             float textW = textPaint.measureText("88 FPS");
             capsuleW = textW + paddingH * 2;
             capsuleH = textSize + paddingV * 2 + 4 * density;
 
-            // 启动 Choreographer
+            
             lastFrameTimeNs = System.nanoTime();
             Choreographer.getInstance().postFrameCallback(this);
         }
@@ -135,7 +131,7 @@ public class FpsMonitorService extends Service {
             Choreographer.getInstance().removeFrameCallback(this);
         }
 
-        // ---- Choreographer 帧回调：测量帧间隔 ----
+        
 
         @Override
         public void doFrame(long frameTimeNanos) {
@@ -149,7 +145,7 @@ public class FpsMonitorService extends Service {
                 frameCount++;
             }
 
-            // 每约1秒更新一次显示
+            
             if (frameCount >= 60) {
                 frameCount = 0;
                 long sumNs = 0;
@@ -173,19 +169,19 @@ public class FpsMonitorService extends Service {
             float w = getWidth();
             float h = getHeight();
 
-            // 背景胶囊
+            
             bgRect.set(0, 0, w, h);
             canvas.drawRoundRect(bgRect, cornerRadius, cornerRadius, bgPaint);
             canvas.drawRoundRect(bgRect, cornerRadius, cornerRadius, borderPaint);
 
-            // FPS 文本
+            
             int textColor = currentFps >= 30 ? Color.rgb(0, 255, 136) : Color.rgb(255, 107, 107);
             textPaint.setColor(textColor);
             float textY = (h + textSize * 0.35f) / 2;
-            // 文字左偏，给关闭按钮留空间
+            
             canvas.drawText(currentFps + " FPS", w / 2, textY, textPaint);
 
-            // 关闭按钮 (右上角小圆)
+            
             float cx = w - closeRadius - 3 * density;
             float cy = closeRadius + 3 * density;
             closeRect.set(cx - closeRadius, cy - closeRadius, cx + closeRadius, cy + closeRadius);
@@ -199,7 +195,7 @@ public class FpsMonitorService extends Service {
             setMeasuredDimension((int) capsuleW, (int) capsuleH);
         }
 
-        // ---- 触摸拖拽 ----
+        
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
@@ -232,14 +228,14 @@ public class FpsMonitorService extends Service {
 
                 case MotionEvent.ACTION_UP:
                     if (!isDragging) {
-                        // 点击事件：判断是否点在关闭按钮区域
+                        
                         float localX = event.getX();
                         float localY = event.getY();
                         float cx2 = getWidth() - closeRadius - 3 * density;
                         float cy2 = closeRadius + 3 * density;
                         float dist = (float) Math.sqrt((localX - cx2) * (localX - cx2) + (localY - cy2) * (localY - cy2));
                         if (dist <= closeRadius + 4 * density) {
-                            // 点击关闭按钮
+                            
                             handler.post(() -> stop(getContext()));
                         }
                     }
@@ -257,7 +253,7 @@ public class FpsMonitorService extends Service {
     }
 
     // ============================================================
-    // 生命周期
+    
     // ============================================================
 
     @Override
@@ -287,7 +283,7 @@ public class FpsMonitorService extends Service {
                 PixelFormat.TRANSLUCENT
         );
         params.gravity = Gravity.TOP | Gravity.START;
-        // 默认位置：右上区域
+        
         params.x = 100;
         params.y = 300;
 
@@ -299,7 +295,7 @@ public class FpsMonitorService extends Service {
     }
 
     // ============================================================
-    // 公开 API
+    
     // ============================================================
 
     public static boolean isRunning() {
@@ -313,7 +309,7 @@ public class FpsMonitorService extends Service {
     }
 
     // ============================================================
-    // Service 生命周期
+    
     // ============================================================
 
     @Override
@@ -345,7 +341,7 @@ public class FpsMonitorService extends Service {
     }
 
     // ============================================================
-    // 通知
+    
     // ============================================================
 
     private void createNotificationChannel() {

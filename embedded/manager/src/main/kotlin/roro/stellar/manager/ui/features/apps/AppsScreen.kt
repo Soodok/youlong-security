@@ -106,7 +106,7 @@ import roro.stellar.manager.ui.components.LocalScreenConfig
 import roro.stellar.manager.ui.components.StellarInfoDialog
 import roro.stellar.manager.ui.components.StellarSegmentedSelector
 import roro.stellar.manager.ui.navigation.components.createTopAppBarScrollBehavior
-// ⚠️ 本工程新增导入：品牌顶栏（带盾牌标识）与状态胶囊标签。
+
 import roro.stellar.manager.ui.components.BrandLargeTopAppBar
 import roro.stellar.manager.ui.components.ShieldStatusTag
 import roro.stellar.manager.ui.theme.AppShape
@@ -243,8 +243,8 @@ fun AppsScreen(
                     }
                 )
             } else {
-                // ⚠️ 本工程改动：改用带盾牌标识的品牌顶栏；搜索/多选两个图标
-                //    通过 trailing 放在标题行右侧，行为与上游一致。
+                
+                
                 BrandLargeTopAppBar(
                     title = stringResource(R.string.authorized_apps),
                     scrollBehavior = scrollBehavior,
@@ -406,7 +406,7 @@ fun AppsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                        // Stellar 原生应用分组
+                        
                         if (stellarApps.isNotEmpty()) {
                             item(span = { GridItemSpan(gridColumns) }) {
                                 Text(
@@ -442,7 +442,7 @@ fun AppsScreen(
                             }
                         }
 
-                        // Shizuku 兼容应用分组
+                        
                         if (shizukuApps.isNotEmpty()) {
                             item(span = { GridItemSpan(gridColumns) }) {
                                 Text(
@@ -843,9 +843,9 @@ fun AppListItem(
                     )
                 }
 
-                // ⚠️ 本工程改动：授权状态由纯文字改为带状态点的胶囊标签，
-                //    「允许」用品牌主色、「拒绝」用告警色、「询问」用中性色，
-                //    扫一眼就能分辨，不用逐行读文字。
+                
+                
+                
                 ShieldStatusTag(
                     text = when (stellarFlag) {
                         AuthorizationManager.FLAG_ASK -> stringResource(R.string.permission_ask)

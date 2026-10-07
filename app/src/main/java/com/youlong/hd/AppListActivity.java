@@ -32,21 +32,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * 自研 · 应用列表页（**本应用自己的界面**）。
- *
- * <p><b>性能说明（重要，2026-10-05 修复）</b>：本页最初用
- * {@code ScrollView + 一次性 addView} 构建全部行，实测在 143 个应用的机器上
- * **滑动即卡死**：每行含图标 + 三个 TextView，全部常驻内存，
- * 布局与测量成本随行数增长，图标还容易把内存顶爆（伴随闪退）。
- *
- * <p>现改为 {@link RecyclerView} + {@link ListAdapter}：
- * <ul>
- *   <li>只保留屏幕内可见的十来行视图，滑动时复用 —— 行数再多也不卡；</li>
- *   <li>图标在绑定时**按需异步加载** + LRU 缓存（上限 64），不再一次性读上百个 Drawable；</li>
- *   <li>数据用 {@link DiffUtil} 局部刷新，避免整表重建。</li>
- * </ul>
- */
+
 public class AppListActivity extends AppCompatActivity {
 
     private final Handler mMain = new Handler(Looper.getMainLooper());
@@ -64,7 +50,7 @@ public class AppListActivity extends AppCompatActivity {
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setAdapter(mAdapter);
         rv.setHasFixedSize(true);
-        rv.setItemAnimator(null);   // 关掉动画：滚动更稳、开销更低
+        rv.setItemAnimator(null);   
 
         loadAppsAsync();
     }
@@ -105,7 +91,7 @@ public class AppListActivity extends AppCompatActivity {
         rv.setId(R.id.app_list);
         rv.setClipToPadding(false);
         rv.setPadding(0, dp(10), 0, dp(10));
-        // 权重 1：占满剩余高度，列表自己滚动（外层不再套 ScrollView）
+        
         root.addView(rv, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
@@ -113,10 +99,10 @@ public class AppListActivity extends AppCompatActivity {
     }
 
     // ==================================================================
-    // 数据
+    
     // ==================================================================
 
-    /** 一条应用记录（只存必要字段，图标不预加载）。 */
+    
     static final class AppEntry {
         final String label;
         final String pkg;
@@ -129,7 +115,7 @@ public class AppListActivity extends AppCompatActivity {
         }
     }
 
-    /** 供自检复用：统计第三方应用与高危权限数量（不构建界面）。 */
+    
     static String summarize(android.content.Context ctx) {
         try {
             PackageManager pm = ctx.getPackageManager();
@@ -219,7 +205,7 @@ public class AppListActivity extends AppCompatActivity {
     }
 
     // ==================================================================
-    // 适配器：视图复用 + 图标懒加载
+    
     // ==================================================================
 
     private final class AppAdapter extends ListAdapter<AppEntry, AppHolder> {
@@ -317,7 +303,7 @@ public class AppListActivity extends AppCompatActivity {
             pkg.setText(e.pkg);
             risk.setText(e.highRisk ? "高危权限（无障碍 / 悬浮窗）" : "");
 
-            // 图标：只在真正要显示这一行时才读；命中 LRU 就直接用
+            
             icon.setTag(e.pkg);
             Drawable cached = IconCache.get(e.pkg);
             if (cached != null) {
@@ -333,7 +319,7 @@ public class AppListActivity extends AppCompatActivity {
                     final Drawable fd = d;
                     if (fd != null) IconCache.put(e.pkg, fd);
                     mMain.post(() -> {
-                        // 视图可能已被复用给别的应用，用 tag 校验后再设置
+                        
                         if (fd != null && e.pkg.equals(icon.getTag())) {
                             icon.setImageDrawable(fd);
                         }
@@ -345,7 +331,7 @@ public class AppListActivity extends AppCompatActivity {
         }
     }
 
-    /** 图标 LRU 缓存：上限 64，避免上百个 Drawable 常驻把内存顶爆。 */
+    
     private static final class IconCache {
         private static final android.util.LruCache<String, Drawable> CACHE =
                 new android.util.LruCache<String, Drawable>(64) {

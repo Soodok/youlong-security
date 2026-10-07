@@ -60,7 +60,7 @@ import roro.stellar.manager.ui.theme.StellarTheme
 import roro.stellar.manager.ui.theme.ThemePreferences
 import roro.stellar.manager.ui.theme.StartPage
 import roro.stellar.manager.util.BackgroundVisibilityUtils
-// ⚠️ 本工程新增导入：selfGrantPermission() 的失败日志。
+
 import roro.stellar.manager.util.Logger.Companion.LOGGER
 
 class MainActivity : ComponentActivity() {
@@ -152,24 +152,24 @@ class MainActivity : ComponentActivity() {
     }
 
     // ======================================================================
-    // 自身免询问授权（2026-10 新增，用户需求）
+    
     // ----------------------------------------------------------------------
-    // 需求：「只要激活了内置特权就自动授权 com.youlong.hd，无需询问」。
+    
     //
-    // 服务端本来就把本应用当作**管理器**（ServerConstants.MANAGER_APPLICATION_ID
-    // == 本应用包名），PermissionEnforcer 对管理器的判定是
-    //     if (isSelf(caller) || isManager(caller)) return      // 直接放行
-    // 所以功能上从来不会被拦。
+    
+    
+    
+    
     //
-    // 之所以还要显式写一次配置，是因为**授权状态是持久化在配置里的**：
-    // 如果历史上这条 uid 的记录被写成 FLAG_DENIED（比如早前版本包名不同、
-    // 或用户误点过「拒绝」），「授权应用」列表里就会显示成「拒绝」，
-    // 既误导用户，也可能让别处基于 flag 的判断出错。
+    
+    
+    
+    
     //
-    // 这里在每次 Binder 连上时把自身的 stellar 权限强制写为 GRANTED：
-    //   · 幂等，重复执行无副作用；
-    //   · 服务端对管理器的调用是放行的，所以这个写入一定成功；
-    //   · 失败只记日志，绝不影响界面。
+    
+    
+    
+    
     // ======================================================================
     private fun selfGrantPermission() {
         try {
@@ -250,9 +250,9 @@ private fun MainScreenContent(
     val topAppBarState = LocalTopAppBarState.current!!
     val navController = rememberNavController()
 
-    // ⚠️ 本工程改动：StartPage.TERMINAL 已删除，启动页分支只剩 首页 / 授权应用。
-    //    老用户如果之前把「命令」设为默认启动页，ThemePreferences 会回落到首页
-    //    （见 ThemePreferences.StartPage.fromValue 的默认值）。
+    
+    
+    
     val startPage = remember { ThemePreferences.startPage.value }
     val initialIndex = when (startPage) {
         StartPage.HOME -> 0

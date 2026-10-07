@@ -21,25 +21,7 @@ import android.widget.TextView;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 自研 · 特权授权确认页。
- *
- * <p><b>为什么需要它</b>：授权弹窗是用户唯一必须做判断的界面，也是"界面与第三方完全相同"
- * 最扎眼的地方。本页用本应用自己的视觉与文案接管这次弹窗 —— 服务端只认"结果"，
- * 不关心界面长什么样，所以我们能整体换掉它。
- *
- * <p><b>它是怎么被拉起来的</b>：特权服务端在需要授权时发出
- * <pre>
- *   Intent("&lt;applicationId&gt;.intent.action.REQUEST_PERMISSION")
- *        .setPackage("com.youlong.hd")
- *        .putExtra("uid"/"pid"/"requestCode"/"permission"/"applicationInfo"/"denyOnce")
- * </pre>
- * 本页在清单里声明同名 action 且带更高 {@code priority}，从而优先拿到这次拉起。
- *
- * <p><b>结果怎么回写</b>：把用户选择打包成 Bundle，交给内核的公开 API
- * {@code Stellar.dispatchPermissionConfirmationResult(uid, pid, requestCode, data)}，
- * 由内核转达给服务端完成裁决 —— 这一段是内核职责，我们不重复实现。
- */
+
 public class PrivAuthActivity extends Activity {
 
     private static final String TAG = "PrivAuth";
@@ -47,7 +29,7 @@ public class PrivAuthActivity extends Activity {
     private static final String ACTION_REQUEST_PERMISSION =
             "com.youlong.hd.intent.action.REQUEST_PERMISSION";
 
-    /** 回写结果用的 key（与内核约定的常量一致，见 StellarApiConstants）。 */
+    
     private static final String KEY_ALLOWED = "stellar:request-permission-reply-allowed";
     private static final String KEY_ONETIME = "stellar:request-permission-reply-is-onetime";
     private static final String KEY_PERMISSION = "stellar:request-permission-reply-permission";
@@ -66,16 +48,7 @@ public class PrivAuthActivity extends Activity {
         setContentView(buildContentView());
     }
 
-    /**
-     * 读取服务端发来的授权请求信息。
-     *
-     * <p><b>安全说明（2026-10 加固）</b>：本页是导出组件（服务端以 shell 身份用
-     * `startActivity` 拉起它，所以不能改成 exported=false），因此它携带的
-     * `uid/pid/permission` 都**可能是被第三方伪造的**。这里只把它们当作"界面展示提示"，
-     * 真正的裁决在服务端：服务端会校验「这次回传是否对应它自己发起、且尚未答复的请求」
-     * （见 PendingPermissionConfirmations），不匹配一律丢弃。
-     * 因此伪造 uid 无法拿到授权，界面也不会因此产生越权。
-     */
+    
     private void readIntent() {
         Intent it = getIntent();
         if (it == null) return;
@@ -89,7 +62,7 @@ public class PrivAuthActivity extends Activity {
     }
 
     // ==================================================================
-    // 界面（本应用自研的视觉与文案）
+    
     // ==================================================================
 
     private View buildContentView() {
@@ -101,7 +74,7 @@ public class PrivAuthActivity extends Activity {
         root.setPadding(pad, dp(28), pad, dp(20));
         root.setGravity(Gravity.CENTER_HORIZONTAL);
 
-        // 图标：直接用本应用自己的图标，用户一眼知道是"游龙安全护盾"在请求
+        
         ImageView icon = new ImageView(this);
         try {
             Drawable d = getPackageManager().getApplicationIcon(getPackageName());
@@ -129,7 +102,7 @@ public class PrivAuthActivity extends Activity {
         sub.setPadding(0, dp(12), 0, dp(18));
         root.addView(sub);
 
-        // 请求来源信息卡
+        
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setBackgroundColor(0xFFF5F5F7);
@@ -140,7 +113,7 @@ public class PrivAuthActivity extends Activity {
         addRow(card, "权限类型", mPermission);
         addRow(card, "执行身份", "系统 shell (uid 2000)");
 
-        // 按钮
+        
         Button allow = new Button(this);
         allow.setText("允许");
         allow.setTextSize(17);
@@ -205,7 +178,7 @@ public class PrivAuthActivity extends Activity {
         parent.addView(row);
     }
 
-    /** 把 uid 翻译成"应用名（包名）"，让用户知道是谁在请求。 */
+    
     private String describeRequester() {
         if (mUid <= 0) return "本应用";
         PackageManager pm = getPackageManager();
@@ -222,7 +195,7 @@ public class PrivAuthActivity extends Activity {
     }
 
     // ==================================================================
-    // 结果回写
+    
     // ==================================================================
 
     private void answer(boolean allowed, boolean onetime) {
@@ -231,7 +204,7 @@ public class PrivAuthActivity extends Activity {
         Log.i(TAG, "用户选择 allowed=" + allowed + " onetime=" + onetime);
         CrashLogger.event("[授权页] 用户选择 allowed=" + allowed + " onetime=" + onetime);
         try {
-            // 等内核 Binder 就绪（服务端可能刚好在重启），最多 5 秒
+            
             awaitBinder(5000);
 
             Bundle data = new Bundle();
@@ -239,7 +212,7 @@ public class PrivAuthActivity extends Activity {
             data.putBoolean(KEY_ONETIME, onetime);
             data.putString(KEY_PERMISSION, mPermission);
 
-            // 内核公开 API：把结果转达给服务端完成裁决
+            
             roro.stellar.Stellar.INSTANCE.dispatchPermissionConfirmationResult(
                     mUid, mPid, mRequestCode, data);
         } catch (Throwable t) {
@@ -270,7 +243,7 @@ public class PrivAuthActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        // 返回键 = 拒绝，避免"点掉弹窗却什么都没发生"
+        
         answer(false, false);
         super.onBackPressed();
     }

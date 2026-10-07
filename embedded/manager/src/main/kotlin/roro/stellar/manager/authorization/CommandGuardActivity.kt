@@ -1,16 +1,16 @@
 // ==========================================================================
-// 游龙安全护盾 —— 新增文件（非上游 Stellar 文件）
+
 // --------------------------------------------------------------------------
-// 用途：命令安全拦截的用户界面。
+
 //
-//   服务端 ProcessManager 在放行一条来自第三方应用的 shell 命令之前，
-//   如果判定该命令危险，会拉起本 Activity：
-//     · kind=block    → 只告知「某应用尝试某操作，已被拦截」，一个「好的」按钮；
-//     · kind=confirm  → 询问用户是否允许（卸载 / 冻结 / 清数据类命令），
-//                       用户选择后写答复文件，服务端据此决定放行或拒绝。
+
+
+
+
+
 //
-//   答复通过文件回传（/data/local/tmp/stellar_guard/<id>.resp）：
-//   服务端与管理器约定用文件握手，避免改动上游 AIDL 接口。
+
+
 //
 // ==========================================================================
 
@@ -20,7 +20,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-// ⚠️ 本工程新增导入（2026-10）：告警框顶部改为应用封面所需。
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-// ⚠️ 本工程新增导入（2026-10）：Drawable -> ImageBitmap。
+
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
@@ -64,14 +64,14 @@ class CommandGuardActivity : ComponentActivity() {
     companion object {
         private const val TAG = "CommandGuardActivity"
 
-        /** 与服务端 CommandGuard 约定的握手目录。 */
+        
         private const val HANDSHAKE_DIR = "/data/local/tmp/stellar_guard"
 
         private const val REPLY_ALLOW = "ALLOW"
         private const val REPLY_DENY = "DENY"
         private const val REPLY_ACK = "ACKNOWLEDGED"
 
-        /** 兼容服务端"确认超时"的时长：即使用户不理会，也不无限占用服务端线程。 */
+        
         private const val AUTO_DISMISS_MS = 30_000L
     }
 
@@ -86,8 +86,8 @@ class CommandGuardActivity : ComponentActivity() {
         val packageName = intent.getStringExtra("packageName")
         val command = intent.getStringExtra("command") ?: ""
         val reason = intent.getStringExtra("reason") ?: ""
-        // 2026-10 新增：服务端命令分析得出的风险类型
-        // system=动系统应用 / bulk=批量操作 / admin=设备管理员·策略 / normal=普通
+        
+        
         val riskKind = intent.getStringExtra("riskKind") ?: "normal"
         replyId = id
 
@@ -97,8 +97,8 @@ class CommandGuardActivity : ComponentActivity() {
             return
         }
 
-        // 服务端在等待答复时会超时兜底；这里到点自动关闭，
-        // 避免对话框长期驻留（用户没看到时也等同于拒绝）。
+        
+        
         window.decorView.postDelayed({
             if (!isFinishing && !replied) {
                 LOGGER.w("$TAG: 用户未在 ${AUTO_DISMISS_MS}ms 内操作，按拒绝处理")
@@ -108,9 +108,9 @@ class CommandGuardActivity : ComponentActivity() {
         }, AUTO_DISMISS_MS)
 
         val appLabel = resolveAppLabel(packageName)
-        // 2026-10 改动（用户需求）：告警框上的图标改成**本应用自己的封面（启动图标）**。
-        // 这里读的是本应用（rather than 被拦截应用）的图标 ——
-        // 弹窗表达的是「游龙工具阻止了这个威胁」，所以应当是护盾自己的标识。
+        
+        
+        
         val selfIcon = resolveSelfIcon()
 
         setContent {
@@ -149,23 +149,15 @@ class CommandGuardActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        // 若因系统原因（返回键、被回收）离开而没有答复，按拒绝处理，
-        // 保证服务端不会一直等到超时。
+        
+        
         if (!replied && replyId != -1L) {
             reply(REPLY_DENY)
         }
         super.onDestroy()
     }
 
-    /**
-     * 本应用自己的启动图标（用作告警框上的标识）。
-     *
-     * ⚠️ 不能用 R.mipmap.ic_launcher：启动图标在 :app 模块里，
-     *    :manager 库模块编译期看不到宿主的 mipmap 资源表（编译期会报
-     *    Unresolved reference 'mipmap'）。所以运行时通过 PackageManager
-     *    取自己的 applicationInfo.icon，再用 Drawable → Bitmap → ImageBitmap
-     *    传给 Compose 的 Image。
-     */
+    
     private fun resolveSelfIcon(): ImageBitmap? {
         return try {
             val drawable = applicationInfo?.loadIcon(packageManager) ?: return null
@@ -182,9 +174,7 @@ class CommandGuardActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * 尽力把包名换成应用显示名，换不到就用包名本身。
-     */
+    
     private fun resolveAppLabel(packageName: String?): String {
         if (packageName.isNullOrEmpty()) return "未知应用"
         return try {
@@ -195,10 +185,7 @@ class CommandGuardActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * 把答复写回握手目录。写失败不重试：服务端本就有超时兜底（视为拒绝），
-     * 而「写不进去」在安全语义上等于拒绝，不会造成误放行。
-     */
+    
     private fun reply(text: String) {
         if (replied || replyId == -1L) return
         replied = true
@@ -216,12 +203,10 @@ class CommandGuardActivity : ComponentActivity() {
 }
 
 // ======================================================================
-// 对话框 UI
+
 // ======================================================================
 
-/**
- * 一个不带图标资源的「盾牌」标识，用字符拼出来，避免依赖具体 drawable。
- */
+
 @Composable
 private fun GuardBadge(container: androidx.compose.ui.graphics.Color) {
     Box(
@@ -239,9 +224,7 @@ private fun GuardBadge(container: androidx.compose.ui.graphics.Color) {
     }
 }
 
-/**
- * 命令内容预览框：等宽字体、最多 4 行、可滚动。
- */
+
 @Composable
 private fun CommandPreview(command: String) {
     Column(
@@ -274,9 +257,7 @@ private fun CommandPreview(command: String) {
     }
 }
 
-/**
- * 单行按钮（与权限确认弹窗保持一致的视觉语言）。
- */
+
 @Composable
 private fun DialogButton(
     text: String,
@@ -307,15 +288,7 @@ private fun DialogButton(
     }
 }
 
-/**
- * 「已被拦截」告警框：只有一个「好的」按钮，不阻塞服务端。
- *
- * 2026-10 改动（用户需求）：
- *   · 标题固定为「游龙工具已阻止此威胁」；
- *   · 顶部标识改为本应用自己的封面（启动图标），读不到时退回内置盾牌标识；
- *   · 正文改为「谁尝试了什么」，不再把「拦截原因」和「尝试」拼成一句话
- *     （原先是「X 尝试 Y，已被拦截」，标题已经是「已阻止」了，重复）。
- */
+
 @Composable
 fun CommandGuardAlertDialog(
     appLabel: String,
@@ -344,7 +317,7 @@ fun CommandGuardAlertDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 顶部标识：优先用应用封面
+                
                 if (appIcon != null) {
                     Image(
                         bitmap = appIcon,
@@ -358,7 +331,7 @@ fun CommandGuardAlertDialog(
                 }
 
                 Text(
-                    // ⚠️ 本工程改动：固定文案「游龙工具已阻止此威胁」。
+                    
                     text = "游龙工具已阻止此威胁",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -367,7 +340,7 @@ fun CommandGuardAlertDialog(
                 )
 
                 Text(
-                    // 「谁尝试了什么」
+                    
                     text = "$appLabel 尝试 $reason",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
@@ -400,15 +373,7 @@ fun CommandGuardAlertDialog(
     }
 }
 
-/**
- * 按风险类型给出针对性的风险说明（2026-10 新增，用户需求）。
- *
- * <p>风险类型由服务端 CommandInterceptor.analyzeRiskKind() 通过命令分析得出：
- *   · system —— 目标是系统应用（设置、系统界面、包安装器…）
- *   · bulk   —— 一条命令里批量操作多个应用
- *   · admin  —— 动设备管理员 / 用户 / 设备策略
- *   · normal —— 普通卸载 / 冻结
- */
+
 @Composable
 private fun RiskHint(riskKind: String) {
     val text = when (riskKind) {
@@ -438,9 +403,7 @@ private fun RiskHint(riskKind: String) {
     }
 }
 
-/**
- * 「是否允许」确认框：允许一次 / 拒绝。
- */
+
 @Composable
 fun CommandGuardConfirmDialog(
     appLabel: String,
@@ -490,8 +453,8 @@ fun CommandGuardConfirmDialog(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                // 2026-10 新增（用户需求）：按命令分析结果给出针对性的风险说明，
-                // 让用户明白"这次到底危险在哪"，而不是干巴巴问一句是否允许。
+                
+                
                 RiskHint(riskKind)
 
                 if (!packageName.isNullOrEmpty()) {

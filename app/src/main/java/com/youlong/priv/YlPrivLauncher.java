@@ -11,38 +11,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 自研特权内核 · 服务端启动器（**完全自研**）。
- *
- * <p>作用只有一个：以 <b>shell(uid 2000)</b> 身份把自研服务端跑起来。
- * 用的是 AOSP 公开的 {@code app_process} 机制，不引用、不复制任何第三方框架代码。
- *
- * <pre>
- *   CLASSPATH=&lt;本应用 APK&gt; /system/bin/app_process[64|32] /system/bin \
- *       --nice-name=youlong_priv com.youlong.priv.server.YlServerMain
- * </pre>
- *
- * <p>为什么 CLASSPATH 指向本应用 APK：服务端的类（{@code com.youlong.priv.*}）
- * 就在这个 APK 里，指向它服务端才加载得到。
- *
- * <p>为什么 shell 身份就是特权：adb 的 shell 用户持有
- * {@code FORCE_STOP_PACKAGES} / {@code READ_LOGS} / {@code PACKAGE_USAGE_STATS} 等权限，
- * 足以执行 {@code pm}、{@code am}、{@code dumpsys} —— 这正是"免 root 强停/卸载/冻结"的来源。
- */
+
 public final class YlPrivLauncher {
 
     private static final String TAG = "YlPrivLauncher";
 
-    /** 服务端入口类。 */
+    
     public static final String SERVER_ENTRY_CLASS =
             "com.youlong.priv.server.YlServerMain";
 
-    /** 服务端进程名（便于在 ps / 日志里辨认）。 */
+    
     public static final String SERVER_NICE_NAME = "youlong_priv";
 
     private YlPrivLauncher() {}
 
-    /** 启动结果。 */
+    
     public static final class SpawnResult {
         public final boolean ok;
         public final long pid;
@@ -55,7 +38,7 @@ public final class YlPrivLauncher {
         }
     }
 
-    /** 本应用 APK 路径（app_process 的 CLASSPATH 目标）。 */
+    
     public static String apkPath() {
         try {
             YouLongApp app = YouLongApp.instance();
@@ -82,7 +65,7 @@ public final class YlPrivLauncher {
         return null;
     }
 
-    /** 与当前进程位数一致的 app_process 可执行文件。 */
+    
     public static String appProcessPath() {
         boolean is64 = "64".equals(System.getProperty("sun.arch.data.model"))
                 || isAbi64(System.getProperty("os.arch"));
@@ -100,11 +83,7 @@ public final class YlPrivLauncher {
         return abi != null && abi.contains("64");
     }
 
-    /**
-     * 拉起服务端。
-     *
-     * @return 启动结果；{@code ok=false} 时 {@code message} 里带原因
-     */
+    
     public static SpawnResult spawnServer(Context ctx) {
         String apk = apkPath();
         if (apk == null) {
@@ -114,7 +93,7 @@ public final class YlPrivLauncher {
         List<String> argv = new ArrayList<>();
         argv.add("sh");
         argv.add("-c");
-        // nohup + & ：让服务端脱离本进程存活；日志进 logcat 方便排查
+        
         String cmd = "CLASSPATH=" + shellQuote(apk) + " "
                 + appProcess + " /system/bin"
                 + " --nice-name=" + SERVER_NICE_NAME
@@ -137,11 +116,7 @@ public final class YlPrivLauncher {
         }
     }
 
-    /**
-     * 等服务端进程出现在进程表里（拿 pid 只为诊断与去重）。
-     *
-     * <p>用 {@code pidof} 而不是轮询 ps：toybox 都带 pidof，且输出最省事。
-     */
+    
     private static long waitForServerPid(long timeoutMs) {
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {

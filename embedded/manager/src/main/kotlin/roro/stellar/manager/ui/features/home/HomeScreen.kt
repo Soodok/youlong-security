@@ -3,7 +3,7 @@ package roro.stellar.manager.ui.features.home
 import android.annotation.SuppressLint
 import roro.stellar.manager.compat.BuildUtils.atLeast30
 import android.widget.Toast
-// ⚠️ 本工程新增导入：首页品牌卡所需的布局/图标组件。
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -86,7 +86,7 @@ fun HomeScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            // ⚠️ 本工程改动：改用带盾牌标识的品牌顶栏（原为 StandardLargeTopAppBar）。
+            
             BrandLargeTopAppBar(
                 title = "游龙安全ADB",
                 scrollBehavior = scrollBehavior
@@ -106,8 +106,8 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(AppSpacing.itemSpacing)
         ) {
             item(span = { GridItemSpan(gridColumns) }) {
-                // ⚠️ 本工程改动：首页主状态卡改为品牌渐变「护盾卡」，
-                //    服务版本 / 运行方式两行信息照旧由 InfoRow 呈现。
+                
+                
                 ShieldHeroCard(
                     appName = "游龙安全ADB",
                     isRunning = isRunning,

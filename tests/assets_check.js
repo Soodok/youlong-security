@@ -19,6 +19,9 @@ function ok(name) {
     console.log('PASS ' + name);
 }
 
+function skip(name, reason) {
+    console.log('SKIP ' + name + (reason ? ' — ' + reason : ''));
+}
 function bad(name, detail) {
     console.log('FAIL ' + name + (detail ? ' — ' + detail : ''));
     failures++;
@@ -52,7 +55,11 @@ for (const name of requiredSh) {
 // ---------------------------------------------------------------------------
 // 2. index.html exists and is non-trivial
 // ---------------------------------------------------------------------------
-if (fs.existsSync(HTML_PATH)) {
+// NOTE (2026-10): the WebView front-end (assets/index.html) is intentionally NOT
+// part of this repository, so a missing file is not a failure. When the file IS
+// present (e.g. a fork that added its own front-end) all of its checks still run.
+const HTML_PRESENT = fs.existsSync(HTML_PATH);
+if (HTML_PRESENT) {
     const sz = fs.statSync(HTML_PATH).size;
     if (sz > 1024) {
         ok('index.html size (' + sz + ' bytes)');
@@ -60,13 +67,13 @@ if (fs.existsSync(HTML_PATH)) {
         bad('index.html size', 'suspiciously small: ' + sz + ' bytes');
     }
 } else {
-    bad('index.html exists', 'file missing');
-    process.exit(1);
+    skip('index.html', 'front-end HTML is not shipped in this repository');
 }
 
 // ---------------------------------------------------------------------------
 // 3. index.html: div balance
 // ---------------------------------------------------------------------------
+if (HTML_PRESENT) {
 const html = fs.readFileSync(HTML_PATH, 'utf8');
 const divOpens = (html.match(/<div\b/g) || []).length;
 const divCloses = (html.match(/<\/div>/g) || []).length;
@@ -123,6 +130,8 @@ if (missing.length === 0) {
 } else {
     bad('js-dom-ids', 'missing ids: ' + missing.join(', '));
 }
+
+} // end of front-end HTML checks
 
 // ---------------------------------------------------------------------------
 console.log('');

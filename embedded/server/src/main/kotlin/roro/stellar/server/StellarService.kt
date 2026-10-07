@@ -196,8 +196,8 @@ class StellarService : IStellarService.Stub() {
             StellarApiConstants.PERMISSION_STELLAR
         )
         if (permission == ShizukuApiConstants.PERMISSION_NAME) {
-            // 修复：原 shizuku 分支未做任何鉴权，且不校验「是否真有这次待确认请求」，
-            // 任意调用者都能为自己/他人写入 GRANTED。
+            
+            
             val caller = CallerContext.fromBinder()
             permissionEnforcer.enforceManager(caller, "dispatchPermissionConfirmationResult")
 
@@ -254,7 +254,7 @@ class StellarService : IStellarService.Stub() {
     override fun getFlagForUid(uid: Int, permission: String): Int {
         val caller = CallerContext.fromBinder()
         if (permission == ShizukuApiConstants.PERMISSION_NAME) {
-            // 修复：原 shizuku 分支无鉴权，任意调用者可读取他人权限标志
+            
             permissionEnforcer.enforceManager(caller, "getFlagForUid")
             val stellarFlag = configManager.getPermissionFlag(uid, ShizukuApiConstants.PERMISSION_NAME)
             return ShizukuApiConstants.stellarToShizukuFlag(stellarFlag)
@@ -266,7 +266,7 @@ class StellarService : IStellarService.Stub() {
     override fun updateFlagForUid(uid: Int, permission: String, flag: Int) {
         val caller = CallerContext.fromBinder()
         if (permission == ShizukuApiConstants.PERMISSION_NAME) {
-            // 修复：原 shizuku 分支无鉴权，任意调用者可为自己/他人写入 GRANTED 从而提权
+            
             permissionEnforcer.enforceManager(caller, "updateFlagForUid")
             val stellarFlag = ShizukuApiConstants.shizukuToStellarFlag(flag)
             configManager.updatePermission(uid, ShizukuApiConstants.PERMISSION_NAME, stellarFlag)

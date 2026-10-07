@@ -40,12 +40,7 @@ class PermissionManager(
         data: Bundle
     ) = requester.dispatchPermissionResult(requestUid, requestPid, requestCode, data)
 
-    /**
-     * 校验并消费一次待确认请求。
-     *
-     * <p>shizuku 兼容层的结果回传不走 [dispatchPermissionResult]（它有自己的标志映射），
-     * 但同样必须先确认「服务端确实发过这次请求」，所以把校验单独暴露出来。
-     */
+    
     fun consumePendingConfirmation(
         requestCode: Int,
         uid: Int,

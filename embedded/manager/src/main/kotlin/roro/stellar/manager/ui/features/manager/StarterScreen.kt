@@ -1,16 +1,16 @@
 // ==========================================================================
-// 本文件来自 https://github.com/roro2239/Stellar 的
+
 //   manager/src/main/kotlin/roro/stellar/manager/ui/features/manager/StarterScreen.kt
-// （MPL-2.0；其中源自 Shizuku 的部分为 Apache-2.0）
+
 //
-// 【本工程修改声明】—— 按 MPL-2.0 第 3.4 条标注
-//   改动：把界面上的品牌名由上游的 "Stellar" 改为本产品名。
-//         · 启动日志的标题文案 → "游龙安全ADB"
-//         · 复制日志时写进剪贴板的主键名 → "游龙安全ADB Log"
-//   原因：本产品把 Stellar 管理器内置为自己的子界面，界面上的品牌名应当是
-//         本产品名而不是上游项目名；这两处是用户可见文案/剪贴板标签，
-//         与逻辑无关（日志内容解析、服务端输出匹配等字符串一律未动）。
-//   除上述文案外，本文件其余内容与上游一致。
+
+
+
+
+
+
+
+
 // ==========================================================================
 
 package roro.stellar.manager.ui.features.manager
@@ -199,7 +199,7 @@ internal fun StarterScreen(
                 .padding(bottom = AppSpacing.screenBottomPadding)
         ) {
             steps.forEachIndexed { index, step ->
-                // 跳过不需要的可选步骤
+                
                 if (step.isOptional && step.status == StepStatus.PENDING && index < currentStepIndex) {
                     return@forEachIndexed
                 }
@@ -1439,7 +1439,7 @@ internal class StarterViewModel(
                         output.contains("启动服务进程") -> {
                             if (checkIndex >= 0) updateStep(checkIndex, StepStatus.COMPLETED, context.getString(R.string.completed))
                             if (startIndex >= 0) updateStep(startIndex, StepStatus.RUNNING, context.getString(R.string.starting_ellipsis))
-                            // 启动超时检查，2秒后如果还没开始等待 Binder，就自动开始
+                            
                             launch {
                                 delay(2000.milliseconds)
                                 val currentSteps = _steps.value
@@ -1454,7 +1454,7 @@ internal class StarterViewModel(
                                 }
                             }
                         }
-                        // 服务进程已 fork，开始等待 Binder
+                        
                         output.contains("stellar_server 进程号为") || output.contains("stellar_starter 正常退出") -> {
                             if (startIndex >= 0) updateStep(startIndex, StepStatus.COMPLETED, context.getString(R.string.completed))
                             if (binderIndex >= 0 && steps[binderIndex].status != StepStatus.RUNNING &&
@@ -1482,12 +1482,12 @@ internal class StarterViewModel(
                         error is SocketTimeoutException ||
                         error is EOFException
                     if (needsPairing) {
-                        // 配对失败，回到配对步骤
+                        
                         val pairingStepIndex = _steps.value.indexOfFirst { it.title == context.getString(R.string.wireless_debugging_pairing) }
                         if (pairingStepIndex >= 0) {
                             pairingPhase = PairingPhase.PAIRING
                             updateStep(pairingStepIndex, StepStatus.ERROR, context.getString(R.string.pairing_failed_retry), needsUserAction = true)
-                            _errorMessage.value = null // 不显示错误卡片，让用户重试配对
+                            _errorMessage.value = null 
                         } else {
                             val connectIndex = _steps.value.indexOfFirst { it.title == context.getString(R.string.connect_adb_service) }
                             setError(Exception(context.getString(R.string.need_pairing_to_connect)), if (connectIndex >= 0) connectIndex else _currentStepIndex.value)

@@ -9,9 +9,7 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-/**
- * 保活闹钟接收器 — 每2分钟检查 ProtectService 是否存活，若被系统杀死则自动重启
- */
+
 public class KeepAliveReceiver extends BroadcastReceiver {
 
     private static final String TAG = "KeepAliveReceiver";
@@ -20,7 +18,7 @@ public class KeepAliveReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         SharedPreferences prefs = context.getSharedPreferences("shield_prefs", Context.MODE_PRIVATE);
         if (!prefs.getBoolean("protect_on", false)) {
-            return; // 用户已关闭守护，不重启
+            return; 
         }
 
         if (!isServiceRunning(context, ProtectService.class)) {
@@ -29,7 +27,7 @@ public class KeepAliveReceiver extends BroadcastReceiver {
             ContextCompat.startForegroundService(context, si);
         }
 
-        // 同时确保 ForegroundService 也在运行（双进程守护）
+        
         if (!isServiceRunning(context, ForegroundService.class)) {
             Log.w(TAG, "ForegroundService 已停止，自动重启...");
             Intent fi = new Intent(context, ForegroundService.class);

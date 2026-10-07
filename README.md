@@ -234,6 +234,7 @@
 |---|---|
 | **自动拦截病毒库** | 病毒库数据、服务器域名、5 个列表路径、关键字库**一律不发布**；`VirusDb` 不再发起任何网络请求，`get()` 返回空库 —— 开源版**不会自动卸载任何应用**，也不会误报。接入自有数据源的方法见 `VirusDb` 类注释（TODO）。 |
 | **应用签名** | 发布 keystore、别名、口令、内置的官方签名证书指纹、盗版警告页，以及“签名绑定资源加密”用的种子/盐**全部移除**；`release` 只产出未签名 APK，前端资源以明文分发，**任何人重新签名都能正常跑**（方便二次开发）。 |
+| **主页面前端 HTML** | WebView 主界面（`app/src/main/assets/index.html`）**不在本仓库范围内**，按作者要求一并移除 —— 因此本源码包**无法直接跑出完整界面**，需自行实现或补齐前端资源后再编译使用。 |
 
 > 也就是说：这个仓库是**能力完整、数据留白**的版本。
 > 想把它变成能用的产品，需要自己接病毒库、自己签名。
@@ -267,12 +268,12 @@
 # 调试包（用 Android 默认调试密钥签名，可直接安装）
 ./gradlew assembleDebug
 
-# 发布包（未签名，产物 app/build/outputs/apk/release/app-release-unsigned.apk）
+# 发布包（未签名，产物 build_out/_app/outputs/apk/release/app-release-unsigned.apk）
 ./gradlew assembleRelease
 
 # 自己签名
 apksigner sign --ks 你的.jks --out app-signed.apk \
-  app/build/outputs/apk/release/app-release-unsigned.apk
+  build_out/_app/outputs/apk/release/app-release-unsigned.apk
 ```
 
 首次构建需要联网拉依赖（AndroidX / Compose / JitPack 上的 libsu、Capsule、compose-markdown）。
@@ -387,6 +388,29 @@ apksigner sign --ks 你的.jks --out app-signed.apk \
 > ⚠️ **历史说明**：本项目自有代码过去按 Apache-2.0 发布（旧注释/旧文档里可能仍写着
 > Apache-2.0），自本次开源起统一改为 **AGPL-3.0**；`NOTICE`、`THIRD_PARTY_NOTICES.md`
 > 与应用内「开源许可」页面（`res/raw/open_source_licenses.txt`）已同步更新。
+
+<p align="right"><a href="#readme-top" title="返回顶部">⬆️ 返回顶部</a></p>
+
+---
+
+<a id="-版权声明附加条款"></a>
+## 六之二、版权声明 · 附加条款（**二次开发必须遵守**）
+
+依 AGPL-3.0 第 7 条，本项目附加如下**两条**条款（完整文字见 [`NOTICE`](NOTICE) 开头）：
+
+| # | 条款 |
+|---|---|
+| **1** | **名称与包名**：二次开发、修改或再分发时，**不得**以「游龙工具」「游龙安全护盾」及其**任何语言**的名称、译名或近似变体作为软件名称；也**不得**使用 `com.youlong.tool` / `com.youlong.hd` 作为软件包名（applicationId）。 |
+| **2** | **封面**：**不得**使用与本软件相同的封面，包括应用图标、启动图、宣传图、商店截图等一切用于标识本软件的视觉素材。 |
+
+> Additional terms (AGPL-3.0 §7):
+> (1) Modified or redistributed versions must **not** use "游龙工具" / "游龙安全护盾"
+> (or any translation / variant in any language) as the software name, nor
+> `com.youlong.tool` / `com.youlong.hd` as the package name (applicationId).
+> (2) They must **not** use the same cover art — app icon, splash image, promotional
+> images or store screenshots — as this software.
+>
+> 以上两条仅为名称/标识方面的附加条款，不影响 AGPL-3.0 赋予你的其它自由。
 
 <p align="right"><a href="#readme-top" title="返回顶部">⬆️ 返回顶部</a></p>
 

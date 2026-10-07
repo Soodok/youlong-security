@@ -1,27 +1,27 @@
 // ==========================================================================
-// 说明：本文件是**本工程新增**（不是上游 Stellar 文件），因此不受 MPL-2.0
-//       第 3.4 条「被修改文件需带修改声明」的约束；此处仅作来源与合规说明。
+
+
 //
-// 新增内容：内置管理器的护盾品牌配色（替代上游的 Material3 默认色板）。
-// 合规相关：本文件不包含任何取自 Stellar 的代码或素材，色值取自本产品
-//           自己网页界面的用色统计。
+
+
+
 // ==========================================================================
 
 // ==========================================================================
-// 游龙安全护盾 —— 新增文件（非上游 Stellar 文件）
+
 // --------------------------------------------------------------------------
-// 用途：「ADB护盾版」内置管理器界面的品牌配色。
+
 //
-// 上游 Stellar 的 Theme.kt 只用了 Material3 的默认色板（lightColorScheme()/
-// darkColorScheme() 不带参数），并默认跟随壁纸动态取色。本工程改为：
-//   · 默认使用这里定义的护盾品牌配色（与宿主「游龙安全护盾」网页 UI 主色一致）；
-//   · 设置页仍可切回「跟随壁纸」（见 ColorMode / ThemePreferences）。
+
+
+
+
 //
-// 取色依据（来自宿主 app/src/main/assets/index.html 内联样式的实际用色统计）：
-//   #007AFF 主蓝   —— 宿主 UI 的主强调色
-//   #FF3B30 警示红 —— 宿主 UI 的危险/告警色
-//   #34C759 成功绿、#FF9500 提醒橙、#8E8E93 中性灰
-// 这里把它们映射到 Material3 的 color roles 上，使内置管理器与宿主外观统一。
+
+
+
+
+
 // ==========================================================================
 
 package roro.stellar.manager.ui.theme
@@ -30,29 +30,21 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-/**
- * 品牌色原始值。
- */
+
 object BrandPalette {
-    /** 主蓝：宿主 UI 的强调色。 */
+    
     val Blue = Color(0xFF007AFF)
-    /** 警示红：宿主 UI 的危险/告警色。 */
+    
     val Red = Color(0xFFFF3B30)
-    /** 成功绿。 */
+    
     val Green = Color(0xFF34C759)
-    /** 提醒橙。 */
+    
     val Orange = Color(0xFFFF9500)
-    /** 中性灰。 */
+    
     val Gray = Color(0xFF8E8E93)
 }
 
-/**
- * 亮色护盾配色。
- *
- * 主色用较深的 #0060DF 而不是 #007AFF：Material3 的 primary 需要与白色
- * onPrimary 形成足够对比度（#007AFF + 纯白文字仅 3.0:1，达不到 4.5:1）。
- * #007AFF 保留给 primaryContainer / 图表等大面积色块使用。
- */
+
 val ShieldLightColors = lightColorScheme(
     primary = Color(0xFF0060DF),
     onPrimary = Color(0xFFFFFFFF),
@@ -96,9 +88,7 @@ val ShieldLightColors = lightColorScheme(
     scrim = Color(0xFF000000)
 )
 
-/**
- * 暗色护盾配色。
- */
+
 val ShieldDarkColors = darkColorScheme(
     primary = Color(0xFFA9C7FF),
     onPrimary = Color(0xFF00306B),

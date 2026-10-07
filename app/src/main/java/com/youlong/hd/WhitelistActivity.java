@@ -27,22 +27,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * 白名单管理。
- * 进页面只显示"加入白名单"按钮。点击弹出应用列表让用户多选。
- * 已加入的应用显示在下方，可移除（内置信任应用除外）。
- *
- * <p>本类同时提供**全应用统一的白名单判定**：
- * {@link #isWhitelisted(Context, String)} 按条目精确匹配，且同时覆盖
- * 内置默认信任包（{@link #DEFAULT_TRUSTED_PKGS}）、历史版本遗留的硬编码信任包
- * （{@link #LEGACY_TRUSTED_PKGS}）与用户自定义白名单。
- * 各拦截/卸载入口请一律调用它，避免出现"某一处漏检查→白名单应用仍被拦截/卸载"
- * 的不一致（历史上 ShieldWarnActivity 只读原始串、漏掉内置信任包，导致微信等
- * 内置信任应用在音量键救援 7 秒倒计时后仍被拉起系统卸载框）。
- */
+
 public class WhitelistActivity extends Activity {
 
-    // ===== 内置默认信任应用（不可移除，防锁机不会拦截） =====
+    
     public static final java.util.Set<String> DEFAULT_TRUSTED_PKGS = new java.util.HashSet<>(java.util.Arrays.asList(
             "com.eg.android.AlipayGphone",
             "com.tencent.mm",
@@ -51,23 +39,13 @@ public class WhitelistActivity extends Activity {
             "com.tencent.mobileqq"
     ));
 
-    /**
-     * 历史版本硬编码跳过的包名（统一并入白名单判定，与白名单管理页语义一致）。
-     * 原先只写死在 ProtectService.loadWhitelist() 里，其他组件读不到。
-     */
+    
     public static final java.util.Set<String> LEGACY_TRUSTED_PKGS = new java.util.HashSet<>(java.util.Arrays.asList(
             "com.larus.nova",
             "com.smile.gifmaker"
     ));
 
-    /**
-     * 统一的白名单判定（各拦截/卸载入口共用，按条目精确匹配）。
-     *
-     * <p>覆盖：内置默认信任包 + 历史遗留信任包 + 用户在白名单管理页/拦截弹窗里
-     * 添加的自定义白名单。匹配规则为「按逗号拆条、逐条 trim 后 equals」，
-     * 不做子串匹配——子串匹配会把 "com.a.b" 误判成已在白名单（如已存在 "com.a.bb"），
-     * 导致"信任此应用"静默失败。
-     */
+    
     public static boolean isWhitelisted(Context ctx, String pkg) {
         if (ctx == null || pkg == null || pkg.isEmpty()) return false;
         if (DEFAULT_TRUSTED_PKGS.contains(pkg) || LEGACY_TRUSTED_PKGS.contains(pkg)) return true;
@@ -97,13 +75,13 @@ public class WhitelistActivity extends Activity {
         prefs = getSharedPreferences("shield_prefs", MODE_PRIVATE);
         loadWhitelist();
 
-        // ===== 根布局 =====
+        
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFFF5F6FA);
         root.setFitsSystemWindows(true);
 
-        // ------- 顶栏 -------
+        
         LinearLayout header = new LinearLayout(this);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -130,7 +108,7 @@ public class WhitelistActivity extends Activity {
 
         root.addView(header);
 
-        // ------- 内容区 -------
+        
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
 
@@ -139,7 +117,7 @@ public class WhitelistActivity extends Activity {
         content.setGravity(Gravity.CENTER_HORIZONTAL);
         content.setPadding(dp(24), dp(40), dp(24), dp(40));
 
-        // 图标
+        
         TextView iconView = new TextView(this);
         iconView.setText("+");
         iconView.setTextColor(0xFF1565C0);
@@ -159,7 +137,7 @@ public class WhitelistActivity extends Activity {
         iconView.setLayoutParams(ip);
         content.addView(iconView);
 
-        // 加入按钮
+        
         Button addBtn = new Button(this);
         addBtn.setText("\u52A0\u5165\u767D\u540D\u5355");
         addBtn.setTextColor(Color.WHITE);
@@ -184,7 +162,7 @@ public class WhitelistActivity extends Activity {
         });
         content.addView(addBtn);
 
-        // 说明文字
+        
         TextView hint = new TextView(this);
         hint.setText("\u767D\u540D\u5355\u4E2D\u7684\u5E94\u7528\u5C06\u4E0D\u4F1A\u88AB\u5B89\u5168\u62A4\u76FE\u62E6\u622A");
         hint.setTextColor(0xFF999999);
@@ -193,7 +171,7 @@ public class WhitelistActivity extends Activity {
         hint.setPadding(0, dp(12), 0, dp(24));
         content.addView(hint);
 
-        // 空状态提示
+        
         emptyHint = new LinearLayout(this);
         emptyHint.setOrientation(LinearLayout.VERTICAL);
         emptyHint.setGravity(Gravity.CENTER);
@@ -206,7 +184,7 @@ public class WhitelistActivity extends Activity {
         emptyHint.addView(emptyText);
         content.addView(emptyHint);
 
-        // 已加入白名单列表容器
+        
         whitelistContainer = new LinearLayout(this);
         whitelistContainer.setOrientation(LinearLayout.VERTICAL);
         whitelistContainer.setPadding(0, dp(16), 0, 0);
@@ -233,9 +211,9 @@ public class WhitelistActivity extends Activity {
 
     private void loadWhitelist() {
         currentWhitelist.clear();
-        // 加入内置默认白名单
+        
         currentWhitelist.addAll(DEFAULT_TRUSTED_PKGS);
-        // 加入用户自定义白名单
+        
         String raw = prefs.getString("whitelist_pkgs", "");
         if (!raw.isEmpty()) {
             for (String p : raw.split(",")) {
@@ -248,7 +226,7 @@ public class WhitelistActivity extends Activity {
     private void saveWhitelist() {
         StringBuilder sb = new StringBuilder();
         for (String p : currentWhitelist) {
-            // 不保存内置默认白名单
+            
             if (DEFAULT_TRUSTED_PKGS.contains(p)) continue;
             if (sb.length() > 0) sb.append(",");
             sb.append(p);
@@ -427,7 +405,7 @@ public class WhitelistActivity extends Activity {
         pkgTv.setSingleLine(true);
         textCol.addView(pkgTv);
 
-        // 内置信任标记
+        
         if (isDefault) {
             TextView badgeTv = new TextView(this);
             badgeTv.setText("\u7CFB\u7EDF\u4FE1\u4EFB");
@@ -449,7 +427,7 @@ public class WhitelistActivity extends Activity {
 
         row.addView(textCol);
 
-        // 内置白名单不显示移除按钮
+        
         if (!isDefault) {
             Button removeBtn = new Button(this);
             removeBtn.setText("\u79FB\u9664");
