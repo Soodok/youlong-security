@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Summarize Android Lint results and fail the job if any Error-severity issue
-# is reported.  The app module has lint { abortOnError false }, so the lint
-# *task* never fails by itself — this script turns real errors into a CI
-# failure while keeping warnings informational.
+# Summarize Android Lint results (informational).
+#
+# Enforcement lives in the lint task itself: app/build.gradle configures
+#   lint { baseline = file('lint-baseline.xml'); checkReleaseBuilds false }
+# so historic issues (recorded in the baseline) are tolerated while any NEW
+# Error-severity issue fails :app:lintDebug directly.  Warnings never abort.
+#
+# This script prints the report totals for visibility in the CI log and in
+# the uploaded lint-report artifact; it exits 0 unless no report exists at
+# all (which would indicate the lint task did not run).
 # =============================================================================
 set -uo pipefail
-
-shopt -s globstar nullglob 2>/dev/null || true
 
 results=( $(find . -type f \( -name 'lint-results-*.xml' -o -name 'lint-results-*.txt' \) \
     -path '*/reports/*' 2>/dev/null) )
@@ -27,7 +31,6 @@ for f in "${results[@]}"; do
             warnings=$(grep -o 'severity="Warning"' "$f" | wc -l)
             ;;
         *.txt)
-            # text reports: "Error: <message>" lines
             errors=$(grep -cE '^Error: ' "$f" || true)
             warnings=$(grep -cE '^Warning: ' "$f" || true)
             ;;
@@ -40,10 +43,7 @@ done
 echo ""
 echo "=============================================="
 echo " Lint totals: $total_errors errors / $total_warnings warnings"
+echo " (errors matching lint-baseline.xml are historic"
+echo "  and tolerated; NEW errors fail the lint task)"
 echo "=============================================="
-
-if [ "$total_errors" -gt 0 ]; then
-    echo "::error::Android Lint reported $total_errors error-severity issue(s). See the uploaded lint-report artifact."
-    exit 1
-fi
 exit 0

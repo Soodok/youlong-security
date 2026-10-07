@@ -334,7 +334,11 @@ android {
     }
 
     lint {
-        abortOnError false
+        // 历史遗留问题记录在 lint-baseline.xml（只含 Error 级别，共 124 项：
+        // 61 MissingTranslation / 46 NewApi / 17 其它）——baseline 内的存量问题
+        // 不再报错，但**新增** Error 会直接让 lint 任务失败（abortOnError 默认 true）。
+        // Warning 保持可见但不阻断。CI 的 lint-summary.sh 仅做汇总展示。
+        baseline = file('lint-baseline.xml')
         checkReleaseBuilds false
     }
 

@@ -12,11 +12,16 @@
 #     pattern words and would self-match;
 #   · docs (`*.md`, `docs/**`) are excluded — they legitimately *describe*
 #     the removed upstream components;
-#   · comment lines are stripped before matching, so "the original version
-#     used SignatureVerifier (removed)" remarks inside code are fine while
-#     any actual code reference fails the guard.
+#   · comment content is blanked before matching (whole line for # // *,
+#     and full <!-- --> / /* */ ranges), so "the original version used
+#     SignatureVerifier (removed)" remarks inside code are fine while any
+#     actual code reference fails the guard.
+#
+# NOTE on `set` flags: intentionally NO pipefail — `sed | grep -q` pipelines
+# rely on grep's exit status; with pipefail, grep -q closing the pipe early
+# gives sed a SIGPIPE (141) and the match is *lost* nondeterministically.
 # =============================================================================
-set -euo pipefail
+set -eu
 
 fail=0
 
@@ -39,12 +44,13 @@ code_files() {
         || true
 }
 
-# strip_comments <file>: remove comment content so only live code is matched
+# strip_comments <file>: blank out comment content so only live code matches
 strip_comments() {
-    sed -e 's://.*$::'        \
-        -e 's:^\s*[#*]::'     \
-        -e 's:<!--.*::'       \
-        -e 's:/\*.*$::'       \
+    sed -e 's://.*$::' \
+        -e 's:^[[:space:]]*[#*].*$::' \
+        -e '/<!--/,/-->/d' \
+        -e '/\/\*/,/\*\//d' \
+        -e 's:/\*.*$::' \
         "$1" 2>/dev/null
 }
 
