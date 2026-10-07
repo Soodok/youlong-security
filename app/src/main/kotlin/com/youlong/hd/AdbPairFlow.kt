@@ -1,5 +1,6 @@
 package com.youlong.hd
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.lifecycle.Observer
@@ -15,6 +16,7 @@ import roro.stellar.manager.startup.worker.AdbStarter
 import roro.stellar.manager.util.EnvironmentUtils
 
 
+@SuppressLint("NewApi")
 object AdbPairFlow {
 
     
@@ -25,10 +27,13 @@ object AdbPairFlow {
         AdbKey(PreferenceAdbKeyStore(StellarSettings.getPreferences()), KEY_NAME)
 
     
-    fun pair(port: Int, code: String): Boolean =
-        AdbPairingClient("127.0.0.1", port, code, adbKey()).use { client ->
+    @SuppressLint("NewApi")
+    fun pair(port: Int, code: String): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+        return AdbPairingClient("127.0.0.1", port, code, adbKey()).use { client ->
             client.start()
         }
+    }
 
     
     fun grantSecureSettings(port: Int, pkg: String, onOutput: (String) -> Unit) {
