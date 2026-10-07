@@ -379,4 +379,25 @@
     <location file="/home/runner/work/youlong-security/youlong-security/app/src/main/res/layout/mtrl_alert_select_dialog_singlechoice.xml" line="2" column="403" />
     <location file="/home/runner/work/youlong-security/youlong-security/app/src/main/res/layout/mtrl_alert_select_dialog_singlechoice.xml" line="2" column="63" />
   </issue>
+  <issue id="ResourceCycle" message="Potential cycle: `Base.V14.Theme.MaterialComponents` is the implied parent of `Base.V14.Theme.MaterialComponents.Bridge` and this defines the opposite" errorLine1="    &lt;style name=&quot;Base.V14.Theme.MaterialComponents&quot; parent=&quot;@style/Base.V14.Theme.MaterialComponents.Bridge&quot;&gt;" errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+    <location file="src/main/res/values/styles.xml" line="1375" column="53" />
+  </issue>
+  <issue id="ResourceCycle" message="Potential cycle: `Base.V14.Theme.MaterialComponents.Dialog` is the implied parent of `Base.V14.Theme.MaterialComponents.Dialog.Bridge` and this defines the opposite" errorLine1="    &lt;style name=&quot;Base.V14.Theme.MaterialComponents.Dialog&quot; parent=&quot;@style/Base.V14.Theme.MaterialComponents.Dialog.Bridge&quot;&gt;" errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+    <location file="src/main/res/values/styles.xml" line="1486" column="60" />
+  </issue>
+  <issue id="ResourceCycle" message="Potential cycle: `Base.V14.Theme.MaterialComponents.Light` is the implied parent of `Base.V14.Theme.MaterialComponents.Light.Bridge` and this defines the opposite" errorLine1="    &lt;style name=&quot;Base.V14.Theme.MaterialComponents.Light&quot; parent=&quot;@style/Base.V14.Theme.MaterialComponents.Light.Bridge&quot;&gt;" errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+    <location file="src/main/res/values/styles.xml" line="1590" column="59" />
+  </issue>
+  <issue id="ResourceCycle" message="Potential cycle: `Base.V14.Theme.MaterialComponents.Light.Dialog` is the implied parent of `Base.V14.Theme.MaterialComponents.Light.Dialog.Bridge` and this defines the opposite" errorLine1="    &lt;style name=&quot;Base.V14.Theme.MaterialComponents.Light.Dialog&quot; parent=&quot;@style/Base.V14.Theme.MaterialComponents.Light.Dialog.Bridge&quot;&gt;" errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+    <location file="src/main/res/values/styles.xml" line="1746" column="66" />
+  </issue>
+  <issue id="ResourceCycle" message="Potential cycle: `Base.Widget.AppCompat.DrawerArrowToggle` is the implied parent of `Base.Widget.AppCompat.DrawerArrowToggle.Common` and this defines the opposite" errorLine1="    &lt;style name=&quot;Base.Widget.AppCompat.DrawerArrowToggle&quot; parent=&quot;@style/Base.Widget.AppCompat.DrawerArrowToggle.Common&quot;&gt;" errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+    <location file="src/main/res/values/styles.xml" line="2492" column="59" />
+  </issue>
+  <issue id="MissingDefaultResource" message="The drawable &quot;abc_dialog_material_background&quot; in drawable-watch has no declaration in the base `drawable` folder or in a `drawable-`*density*`dpi` folder; this can lead to crashes when the drawable is queried in a configuration that does not match this qualifier" errorLine1="&lt;shape android:shape=&quot;rectangle&quot;" errorLine2=" ~~~~~">
+    <location file="src/main/res/drawable-watch/abc_dialog_material_background.xml" line="2" column="2" />
+  </issue>
+  <issue id="MissingDefaultResource" message="The layout &quot;material_clock_period_toggle_land&quot; in layout-land has no declaration in the base `layout` folder; this can lead to crashes when the resource is queried in a configuration that does not match this qualifier" errorLine1="&lt;com.google.android.material.button.MaterialButtonToggleGroup android:orientation=&quot;horizontal&quot; android:id=&quot;@id/material_clock_period_toggle&quot; android:visibility=&quot;gone&quot; android:layout_width=&quot;wrap_content&quot; android:layout_height=&quot;wrap_content&quot; app:checkedButton=&quot;@id/material_clock_period_am_button&quot; app:selectionRequired=&quot;true&quot; app:singleSelection=&quot;true&quot;" errorLine2=" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+    <location file="src/main/res/layout-land/material_clock_period_toggle_land.xml" line="2" column="2" />
+  </issue>
 </issues>
