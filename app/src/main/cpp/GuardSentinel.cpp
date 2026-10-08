@@ -27,19 +27,21 @@
 #include <jni.h>
 #include <sys/types.h>
 #include <sys/resource.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <atomic>
 
 
 #define SENTINEL_MAIN_DEAD   "sentinel_main_dead"
 #define SENTINEL_GUARD_DEAD  "sentinel_guard_dead"
 
 
-static volatile pid_t s_child_pid = 0;
-static volatile unsigned long long s_child_start = 0;
+static std::atomic<pid_t> s_child_pid{0};
+static std::atomic<unsigned long long> s_child_start{0};
 
 
 
@@ -138,8 +140,10 @@ extern "C" int android_fdsan_set_error_level(int) __attribute__((weak));
 #define YL_FDSAN_ERROR_LEVEL_DISABLED 0
 
 static void close_inherited_fds(void) {
-    if (!android_fdsan_set_error_level) return;                 
-    (void) android_fdsan_set_error_level(YL_FDSAN_ERROR_LEVEL_DISABLED);
+    // 关 fd 是主职责；fdsan 只在 API 29+ 可用时附带禁用，不能决定关 fd 是否执行
+    if (android_fdsan_set_error_level) {
+        (void) android_fdsan_set_error_level(YL_FDSAN_ERROR_LEVEL_DISABLED);
+    }
 
     long maxfd = 4096;
     struct rlimit rl;
@@ -174,7 +178,7 @@ static void clear_file(const char* path) {
 }
 
 
-JNIEXPORT jint JNICALL gs_startSentinel(JNIEnv* env, jobject thiz,
+extern "C" JNIEXPORT jint JNICALL gs_startSentinel(JNIEnv* env, jobject thiz,
                                         jint mainPid, jint guardPid, jstring signalDir) {
     (void)thiz;
     const char* dir = (signalDir != NULL) ? env->GetStringUTFChars(signalDir, NULL) : NULL;
@@ -221,26 +225,34 @@ JNIEXPORT jint JNICALL gs_startSentinel(JNIEnv* env, jobject thiz,
     
     
     
-    if (s_child_pid > 0 && s_child_pid != pid && s_child_start != 0) {
-        if (proc_starttime(s_child_pid) == s_child_start) {
-            kill(s_child_pid, SIGKILL);
+    const pid_t oldPid = s_child_pid.load();
+    const unsigned long long oldStart = s_child_start.load();
+    if (oldPid > 0 && oldPid != pid && oldStart != 0) {
+        if (proc_starttime(oldPid) == oldStart) {
+            kill(oldPid, SIGKILL);
         }
+        // 回收旧哨兵僵尸（无论是否还活着）
+        (void) waitpid(oldPid, nullptr, WNOHANG);
     }
-    s_child_pid = pid;
-    s_child_start = proc_starttime(pid);
+    s_child_pid.store(pid);
+    s_child_start.store(proc_starttime(pid));
     return (jint)pid;
 }
 
 
-JNIEXPORT void JNICALL gs_stopSentinel(JNIEnv* env, jobject thiz) {
+extern "C" JNIEXPORT void JNICALL gs_stopSentinel(JNIEnv* env, jobject thiz) {
     (void)env; (void)thiz;
-    const pid_t pid = s_child_pid;
-    const unsigned long long start = s_child_start;
-    s_child_pid = 0;
-    s_child_start = 0;
+    const pid_t pid = s_child_pid.load();
+    const unsigned long long start = s_child_start.load();
+    s_child_pid.store(0);
+    s_child_start.store(0);
     
     if (pid > 0 && start != 0 && proc_starttime(pid) == start) {
         kill(pid, SIGKILL);
+    }
+    // 回收哨兵僵尸
+    if (pid > 0) {
+        (void) waitpid(pid, nullptr, WNOHANG);
     }
 }
 
