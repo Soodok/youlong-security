@@ -33,15 +33,21 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
-#include <atomic>
 
 
 #define SENTINEL_MAIN_DEAD   "sentinel_main_dead"
 #define SENTINEL_GUARD_DEAD  "sentinel_guard_dead"
 
 
-static std::atomic<pid_t> s_child_pid{0};
-static std::atomic<unsigned long long> s_child_start{0};
+// 本目标以 -DANDROID_STL=none 编译（无 C++ STL 头），不能使用 <atomic>；
+// 改用 GCC/Clang 内建 __atomic_* 提供跨线程原子读写（无需头文件）。
+static volatile pid_t s_child_pid = 0;
+static volatile unsigned long long s_child_start = 0;
+
+static pid_t sentinel_load_pid() { return __atomic_load_n(&s_child_pid, __ATOMIC_SEQ_CST); }
+static void sentinel_store_pid(pid_t v) { __atomic_store_n(&s_child_pid, v, __ATOMIC_SEQ_CST); }
+static unsigned long long sentinel_load_start() { return __atomic_load_n(&s_child_start, __ATOMIC_SEQ_CST); }
+static void sentinel_store_start(unsigned long long v) { __atomic_store_n(&s_child_start, v, __ATOMIC_SEQ_CST); }
 
 
 
@@ -225,8 +231,8 @@ extern "C" JNIEXPORT jint JNICALL gs_startSentinel(JNIEnv* env, jobject thiz,
     
     
     
-    const pid_t oldPid = s_child_pid.load();
-    const unsigned long long oldStart = s_child_start.load();
+    const pid_t oldPid = sentinel_load_pid();
+    const unsigned long long oldStart = sentinel_load_start();
     if (oldPid > 0 && oldPid != pid && oldStart != 0) {
         if (proc_starttime(oldPid) == oldStart) {
             kill(oldPid, SIGKILL);
@@ -234,18 +240,18 @@ extern "C" JNIEXPORT jint JNICALL gs_startSentinel(JNIEnv* env, jobject thiz,
         // 回收旧哨兵僵尸（无论是否还活着）
         (void) waitpid(oldPid, nullptr, WNOHANG);
     }
-    s_child_pid.store(pid);
-    s_child_start.store(proc_starttime(pid));
+    sentinel_store_pid(pid);
+    sentinel_store_start(proc_starttime(pid));
     return (jint)pid;
 }
 
 
 extern "C" JNIEXPORT void JNICALL gs_stopSentinel(JNIEnv* env, jobject thiz) {
     (void)env; (void)thiz;
-    const pid_t pid = s_child_pid.load();
-    const unsigned long long start = s_child_start.load();
-    s_child_pid.store(0);
-    s_child_start.store(0);
+    const pid_t pid = sentinel_load_pid();
+    const unsigned long long start = sentinel_load_start();
+    sentinel_store_pid(0);
+    sentinel_store_start(0);
     
     if (pid > 0 && start != 0 && proc_starttime(pid) == start) {
         kill(pid, SIGKILL);

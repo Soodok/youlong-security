@@ -664,10 +664,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             // 强行限定到本应用，并清掉页面指定的 URI 授权标志
             intent.setPackage(getPackageName());
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.removeFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+            final int grantFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                     | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                    | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+                    | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION;
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                intent.removeFlags(grantFlags);
+            } else {
+                // Intent.removeFlags 需要 API 26：低版本用 setFlags 等价清除
+                intent.setFlags(intent.getFlags() & ~grantFlags);
+            }
 
             ComponentName cn = intent.getComponent();
             final boolean known = cn != null
